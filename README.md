@@ -3,7 +3,7 @@
 ## ℹ️ About the Project
 
     This REST API was developed for educational purposes, as an exercise in working with TypeScript. The main goal is to practice type safety, apply best practices in code structure, and build server-side logic using Express and TypeScript.
-    Note: This project is not intended for production use.
+    Note: Note: This project is in production use.
 
 ## 🛠️ Technologies Used
 
