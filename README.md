@@ -1,7 +1,4 @@
-# NOTES API - [Live API](https://notes-api-1034694665482.europe-west4.run.app/) ⚠️Under development
-
-- use /api/docs - does not support request execution
-- use /api/notes
+# Mogilev33 API - [Live API](https://mogilev33-api-1015282011082.europe-west4.run.app) ⚠️Under development
 
 ## ℹ️ About the Project
 
@@ -34,7 +31,7 @@
 ⚠️ **Note:** To install the necessary dependencies for the NOTES API server, open a terminal and run:
 
 ```sh
-cd NOTES API
+cd MOGILEV33 API
 npm install
 ```
 
@@ -73,8 +70,8 @@ Server running on http://localhost:3000
 Successfully connected to the cloud DB!
 ```
 
-## 4. Use Documentation
+<!-- ## 4. Use Documentation
 
 ```
 After server is on, go to http://localhost:3000/api/docs
-```
+``` -->
