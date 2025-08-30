@@ -1,0 +1,17 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+    name: mogilev33-api
+    namespace: mogilev33api
+spec:
+    template:
+        metadata:
+        spec:
+            containers:
+                - image: europe-west4-docker.pkg.dev/mogilev33api/mogilev33-repo/mogilev33-api
+                  env:
+                      - name: CLOUD_DB_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: cloud-db-url
+                                key: latest

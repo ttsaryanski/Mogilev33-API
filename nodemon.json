@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts, .js, .mjs, .coffee, .litcoffee, .json, .yaml",
+  "ignore": ["dist"],
+  "exec": "node --loader ts-node/esm --no-warnings src/server.ts"
+}

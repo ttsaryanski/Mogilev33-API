@@ -1,0 +1,230 @@
+openapi: 3.0.0
+info:
+    title: Notes REST API
+    version: 1.0.0
+
+servers:
+    - url: http://localhost:3000/api
+
+paths:
+    /notes:
+        get:
+            summary: Gets all notes
+            tags: [Notes]
+            responses:
+                200:
+                    description: Ok - Successfully retrieved notes
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/GetAllNotesResponse"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        post:
+            summary: Creates a new note
+            tags: [Notes]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateNoteRequest"
+            responses:
+                201:
+                    description: Created - note successfully created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleNote"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Note title should be at least 3 characters long!"
+                                invalidContent:
+                                    summary: Invalid content
+                                    value:
+                                        message: "Note content should be at least 3 characters long!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+    /notes/{noteId}:
+        get:
+            summary: Gets a note by ID
+            tags: [Notes]
+            parameters:
+                - in: path
+                  name: noteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the note (valid ObjectId - 24 characters)
+            responses:
+                200:
+                    description: Ok - Successfully retrieved note
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleNote"
+                400:
+                    description: Bad Request - invalid ID
+                    content:
+                        application/json:
+                            example:
+                                message: "Id must be a valid MongooseDB ObjectId!"
+                404:
+                    description: Not Found - note does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "There is no note with this id!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        put:
+            summary: Updates a note by ID
+            tags: [Notes]
+            parameters:
+                - in: path
+                  name: noteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the note (valid ObjectId - 24 characters)
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/EditNoteRequest"
+            responses:
+                201:
+                    description: Created - note successfully updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleNote"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidId:
+                                    summary: Invalid ID
+                                    value:
+                                        message: "Id must be a valid MongooseDB ObjectId!"
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Note title should be at least 3 characters long!"
+                                invalidContent:
+                                    summary: Invalid content
+                                    value:
+                                        message: "Note content should be at least 3 characters long!"
+                404:
+                    description: Not Found - note does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Note not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        delete:
+            summary: Deletes a note by ID
+            tags: [Notes]
+            parameters:
+                - in: path
+                  name: noteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the note (valid ObjectId - 24 characters)
+            responses:
+                204:
+                    description: No Content - note successfully deleted
+                400:
+                    description: Bad Request - invalid ID
+                    content:
+                        application/json:
+                            example:
+                                message: "Id must be a valid MongooseDB ObjectId!"
+                404:
+                    description: Not Found - note does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Note not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+components:
+    schemas:
+        SimpleNote:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    example: "6833318fd414ea08fac843ec"
+                title:
+                    type: string
+                    example: "Note title"
+                content:
+                    type: string
+                    example: "Note content"
+                createdAt:
+                    type: string
+                    format: date-time
+                    example: "2025-05-25T15:04:47.780Z"
+
+        GetAllNotesResponse:
+            type: array
+            items:
+                $ref: "#/components/schemas/SimpleNote"
+
+        CreateNoteRequest:
+            type: object
+            required:
+                - title
+                - content
+            properties:
+                title:
+                    type: string
+                    example: "New note Title"
+                content:
+                    type: string
+                    example: "New note content"
+
+        EditNoteRequest:
+            type: object
+            required:
+                - title
+                - content
+            properties:
+                title:
+                    type: string
+                    example: "Edited Title"
+                content:
+                    type: string
+                    example: "Edited content"
