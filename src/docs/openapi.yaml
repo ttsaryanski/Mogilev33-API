@@ -17,7 +17,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/GetAllProtocolsResponse"
+                                $ref: "#/components/schemas/GetAllProtocolsAndInvitationsResponse"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -32,14 +32,14 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/CreateProtocolRequest"
+                            $ref: "#/components/schemas/CreateProtocolAndInviteRequest"
             responses:
                 201:
                     description: Created - protocol successfully created
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SimpleProtocol"
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
                 400:
                     description: Bad Request - invalid data
                     content:
@@ -73,14 +73,14 @@ paths:
                   required: true
                   schema:
                       type: string
-                  description: ID of the note (valid ObjectId - 24 characters)
+                  description: ID of the protocol (valid ObjectId - 24 characters)
             responses:
                 200:
                     description: Ok - Successfully retrieved protocol
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SimpleProtocol"
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
                 400:
                     description: Bad Request - invalid ID
                     content:
@@ -108,20 +108,20 @@ paths:
                   required: true
                   schema:
                       type: string
-                  description: ID of the note (valid ObjectId - 24 characters)
+                  description: ID of the protocol (valid ObjectId - 24 characters)
             requestBody:
                 required: true
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/EditProtocolRequest"
+                            $ref: "#/components/schemas/EditProtocolAndInviteRequest"
             responses:
                 200:
                     description: Ok - protocol successfully updated
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SimpleProtocol"
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
                 400:
                     description: Bad Request - invalid data
                     content:
@@ -164,7 +164,7 @@ paths:
                   required: true
                   schema:
                       type: string
-                  description: ID of the note (valid ObjectId - 24 characters)
+                  description: ID of the protocol (valid ObjectId - 24 characters)
             responses:
                 204:
                     description: No Content - protocol successfully deleted
@@ -175,7 +175,7 @@ paths:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
                 404:
-                    description: Not Found - note does not exist
+                    description: Not Found - protocol does not exist
                     content:
                         application/json:
                             example:
@@ -186,10 +186,376 @@ paths:
                         application/json:
                             example:
                                 message: "Internal server error..."
+    /invitations:
+        get:
+            summary: Gets all invitations
+            tags: [Invitations]
+            responses:
+                200:
+                    description: Ok - Successfully retrieved invitations
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/GetAllProtocolsAndInvitationsResponse"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        post:
+            summary: Creates a new invite
+            tags: [Invitations]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateProtocolAndInviteRequest"
+            responses:
+                201:
+                    description: Created - invite successfully created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Invite title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
+                                    value:
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFileUrl:
+                                    summary: Invalid fileUrl
+                                    value:
+                                        message: "Invalid file URL!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+    /invitations/{inviteId}:
+        get:
+            summary: Gets a invite by ID
+            tags: [Invitations]
+            parameters:
+                - in: path
+                  name: inviteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the invite (valid ObjectId - 24 characters)
+            responses:
+                200:
+                    description: Ok - Successfully retrieved invite
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid ID
+                    content:
+                        application/json:
+                            example:
+                                message: "Id must be a valid MongooseDB ObjectId!"
+                404:
+                    description: Not Found - invite does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Invite not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        put:
+            summary: Updates a invite by ID
+            tags: [Invitations]
+            parameters:
+                - in: path
+                  name: inviteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the invite (valid ObjectId - 24 characters)
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/EditProtocolAndInviteRequest"
+            responses:
+                200:
+                    description: Ok - invite successfully updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidId:
+                                    summary: Invalid ID
+                                    value:
+                                        message: "Id must be a valid MongooseDB ObjectId!"
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Invite title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
+                                    value:
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFileUrl:
+                                    summary: Invalid fileUrl
+                                    value:
+                                        message: "Invalid file URL!"
+                404:
+                    description: Not Found - invite does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Invite not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        delete:
+            summary: Deletes a invite by ID
+            tags: [Invitations]
+            parameters:
+                - in: path
+                  name: inviteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the invite (valid ObjectId - 24 characters)
+            responses:
+                204:
+                    description: No Content - invite successfully deleted
+                400:
+                    description: Bad Request - invalid ID
+                    content:
+                        application/json:
+                            example:
+                                message: "Id must be a valid MongooseDB ObjectId!"
+                404:
+                    description: Not Found - invite does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Invite not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+    /offers:
+        get:
+            summary: Gets all offers
+            tags: [Offers]
+            responses:
+                200:
+                    description: Ok - Successfully retrieved offers
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/GetAllOffers"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        post:
+            summary: Creates a new offer
+            tags: [Offers]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateOfferRequest"
+            responses:
+                201:
+                    description: Created - offer successfully created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleOffer"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Offer title should be at least 3 characters long!"
+                                invalidCompany:
+                                    summary: Invalid company name
+                                    value:
+                                        message: "Company name should be at least 2 characters long!"
+                                invalidPrice:
+                                    summary: Invalid price
+                                    value:
+                                        message: "Price must be a positive number!"
+                                invalidFileUrl:
+                                    summary: Invalid fileUrl
+                                    value:
+                                        message: "Invalid file URL!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+    /offers/{offerId}:
+        get:
+            summary: Gets a offer by ID
+            tags: [Offers]
+            parameters:
+                - in: path
+                  name: offerId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the offer (valid ObjectId - 24 characters)
+            responses:
+                200:
+                    description: Ok - Successfully retrieved offer
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleOffer"
+                400:
+                    description: Bad Request - invalid ID
+                    content:
+                        application/json:
+                            example:
+                                message: "Id must be a valid MongooseDB ObjectId!"
+                404:
+                    description: Not Found - offer does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Offer not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        put:
+            summary: Updates a offer by ID
+            tags: [Offers]
+            parameters:
+                - in: path
+                  name: offerId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the offer (valid ObjectId - 24 characters)
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/EditOfferRequest"
+            responses:
+                200:
+                    description: Ok - offer successfully updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleOffer"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidId:
+                                    summary: Invalid ID
+                                    value:
+                                        message: "Id must be a valid MongooseDB ObjectId!"
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Offer title should be at least 3 characters long!"
+                                invalidCompany:
+                                    summary: Invalid company name
+                                    value:
+                                        message: "Company name should be at least 2 characters long!"
+                                invalidPrice:
+                                    summary: Invalid price
+                                    value:
+                                        message: "Price must be a positive number!"
+                                invalidFileUrl:
+                                    summary: Invalid fileUrl
+                                    value:
+                                        message: "Invalid file URL!"
+                404:
+                    description: Not Found - offer does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Offer not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+        delete:
+            summary: Deletes a offer by ID
+            tags: [Offers]
+            parameters:
+                - in: path
+                  name: offerId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the offer (valid ObjectId - 24 characters)
+            responses:
+                204:
+                    description: No Content - offer successfully deleted
+                400:
+                    description: Bad Request - invalid ID
+                    content:
+                        application/json:
+                            example:
+                                message: "Id must be a valid MongooseDB ObjectId!"
+                404:
+                    description: Not Found - offer does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Offer not found!"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
 
 components:
     schemas:
-        SimpleProtocol:
+        SimpleProtocolAndInvite:
             type: object
             properties:
                 _id:
@@ -197,7 +563,7 @@ components:
                     example: "6833318fd414ea08fac843ec"
                 title:
                     type: string
-                    example: "Protocol title"
+                    example: "Title"
                 date:
                     type: string
                     example: "2025/01/01"
@@ -209,12 +575,12 @@ components:
                     format: date-time
                     example: "2025-05-25T15:04:47.780Z"
 
-        GetAllProtocolsResponse:
+        GetAllProtocolsAndInvitationsResponse:
             type: array
             items:
-                $ref: "#/components/schemas/SimpleProtocol"
+                $ref: "#/components/schemas/SimpleProtocolAndInvite"
 
-        CreateProtocolRequest:
+        CreateProtocolAndInviteRequest:
             type: object
             required:
                 - title
@@ -223,15 +589,15 @@ components:
             properties:
                 title:
                     type: string
-                    example: "New protocol Title"
+                    example: "New title"
                 date:
                     type: string
                     example: "2025/01/01"
                 fileUrl:
                     type: string
-                    example: "https://example.pdf"
+                    example: "https://newExample.pdf"
 
-        EditProtocolRequest:
+        EditProtocolAndInviteRequest:
             type: object
             required:
                 - title
@@ -240,10 +606,80 @@ components:
             properties:
                 title:
                     type: string
-                    example: "Edited Title"
+                    example: "Edited title"
                 date:
                     type: string
                     example: "2025/01/02"
+                fileUrl:
+                    type: string
+                    example: "https://editedExample.pdf"
+
+        SimpleOffer:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    example: "6833318fd414ea08fac843ec"
+                title:
+                    type: string
+                    example: "Title"
+                company:
+                    type: string
+                    example: "Company name"
+                price:
+                    type: number
+                    example: 100
+                fileUrl:
+                    type: string
+                    example: "https://example.pdf"
+                createdAt:
+                    type: string
+                    format: date-time
+                    example: "2025-05-25T15:04:47.780Z"
+
+        GetAllOffers:
+            type: array
+            items:
+                $ref: "#/components/schemas/SimpleOffer"
+
+        CreateOfferRequest:
+            type: object
+            required:
+                - title
+                - company
+                - price
+                - fileUrl
+            properties:
+                title:
+                    type: string
+                    example: "New title"
+                company:
+                    type: string
+                    example: "New company"
+                price:
+                    type: number
+                    example: 111
+                fileUrl:
+                    type: string
+                    example: "https://newExample.pdf"
+
+        EditOfferRequest:
+            type: object
+            required:
+                - title
+                - company
+                - price
+                - fileUrl
+            properties:
+                title:
+                    type: string
+                    example: "Edited title"
+                company:
+                    type: string
+                    example: "Edited company"
+                price:
+                    type: number
+                    example: 222
                 fileUrl:
                     type: string
                     example: "https://editedExample.pdf"
