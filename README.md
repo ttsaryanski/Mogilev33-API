@@ -3,7 +3,7 @@
 ## ℹ️ About the Project
 
     This REST API was developed for educational purposes, as an exercise in working with TypeScript. The main goal is to practice type safety, apply best practices in code structure, and build server-side logic using Express and TypeScript.
-    Note: Note: This project is in production use.
+    ⚠️ Note: This project is in production use.
 
 ## 🛠️ Technologies Used
 
@@ -28,7 +28,7 @@
 
 ## 1. Install Dependencies
 
-⚠️ **Note:** To install the necessary dependencies for the NOTES API server, open a terminal and run:
+⚠️ **Note:** To install the necessary dependencies for the Mogilev33 API server, open a terminal and run:
 
 ```sh
 cd MOGILEV33 API
@@ -55,7 +55,7 @@ npm install
 
 3. Save the file.
 
-## 3. Start the NOTES API Server
+## 3. Start the Mogilev33 API Server
 
 ⚠️ **Note:** Run the following command to start the server:
 
@@ -70,8 +70,8 @@ Server running on http://localhost:3000
 Successfully connected to the cloud DB!
 ```
 
-<!-- ## 4. Use Documentation
+## 4. Use Documentation
 
 ```
 After server is on, go to http://localhost:3000/api/docs
-``` -->
+```

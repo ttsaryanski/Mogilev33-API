@@ -1,23 +1,23 @@
 openapi: 3.0.0
 info:
-    title: Notes REST API
+    title: Mogilev33 REST API
     version: 1.0.0
 
 servers:
     - url: http://localhost:3000/api
 
 paths:
-    /notes:
+    /protocols:
         get:
-            summary: Gets all notes
-            tags: [Notes]
+            summary: Gets all protocols
+            tags: [Protocols]
             responses:
                 200:
-                    description: Ok - Successfully retrieved notes
+                    description: Ok - Successfully retrieved protocols
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/GetAllNotesResponse"
+                                $ref: "#/components/schemas/GetAllProtocolsResponse"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -25,21 +25,21 @@ paths:
                             example:
                                 message: "Internal server error..."
         post:
-            summary: Creates a new note
-            tags: [Notes]
+            summary: Creates a new protocol
+            tags: [Protocols]
             requestBody:
                 required: true
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/CreateNoteRequest"
+                            $ref: "#/components/schemas/CreateProtocolRequest"
             responses:
                 201:
-                    description: Created - note successfully created
+                    description: Created - protocol successfully created
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SimpleNote"
+                                $ref: "#/components/schemas/SimpleProtocol"
                 400:
                     description: Bad Request - invalid data
                     content:
@@ -48,35 +48,39 @@ paths:
                                 invalidTitle:
                                     summary: Invalid title
                                     value:
-                                        message: "Note title should be at least 3 characters long!"
-                                invalidContent:
-                                    summary: Invalid content
+                                        message: "Protocol title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
                                     value:
-                                        message: "Note content should be at least 3 characters long!"
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFileUrl:
+                                    summary: Invalid fileUrl
+                                    value:
+                                        message: "Invalid file URL!"
                 500:
                     description: Internal Server Error - server error
                     content:
                         application/json:
                             example:
                                 message: "Internal server error..."
-    /notes/{noteId}:
+    /protocols/{protocolId}:
         get:
-            summary: Gets a note by ID
-            tags: [Notes]
+            summary: Gets a protocol by ID
+            tags: [Protocols]
             parameters:
                 - in: path
-                  name: noteId
+                  name: protocolId
                   required: true
                   schema:
                       type: string
                   description: ID of the note (valid ObjectId - 24 characters)
             responses:
                 200:
-                    description: Ok - Successfully retrieved note
+                    description: Ok - Successfully retrieved protocol
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SimpleNote"
+                                $ref: "#/components/schemas/SimpleProtocol"
                 400:
                     description: Bad Request - invalid ID
                     content:
@@ -84,11 +88,11 @@ paths:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
                 404:
-                    description: Not Found - note does not exist
+                    description: Not Found - protocol does not exist
                     content:
                         application/json:
                             example:
-                                message: "There is no note with this id!"
+                                message: "Protocol not found!"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -96,11 +100,11 @@ paths:
                             example:
                                 message: "Internal server error..."
         put:
-            summary: Updates a note by ID
-            tags: [Notes]
+            summary: Updates a protocol by ID
+            tags: [Protocols]
             parameters:
                 - in: path
-                  name: noteId
+                  name: protocolId
                   required: true
                   schema:
                       type: string
@@ -110,14 +114,14 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/EditNoteRequest"
+                            $ref: "#/components/schemas/EditProtocolRequest"
             responses:
-                201:
-                    description: Created - note successfully updated
+                200:
+                    description: Ok - protocol successfully updated
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SimpleNote"
+                                $ref: "#/components/schemas/SimpleProtocol"
                 400:
                     description: Bad Request - invalid data
                     content:
@@ -130,17 +134,21 @@ paths:
                                 invalidTitle:
                                     summary: Invalid title
                                     value:
-                                        message: "Note title should be at least 3 characters long!"
-                                invalidContent:
-                                    summary: Invalid content
+                                        message: "Protocol title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
                                     value:
-                                        message: "Note content should be at least 3 characters long!"
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFileUrl:
+                                    summary: Invalid fileUrl
+                                    value:
+                                        message: "Invalid file URL!"
                 404:
-                    description: Not Found - note does not exist
+                    description: Not Found - protocol does not exist
                     content:
                         application/json:
                             example:
-                                message: "Note not found!"
+                                message: "Protocol not found!"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -148,18 +156,18 @@ paths:
                             example:
                                 message: "Internal server error..."
         delete:
-            summary: Deletes a note by ID
-            tags: [Notes]
+            summary: Deletes a protocol by ID
+            tags: [Protocols]
             parameters:
                 - in: path
-                  name: noteId
+                  name: protocolId
                   required: true
                   schema:
                       type: string
                   description: ID of the note (valid ObjectId - 24 characters)
             responses:
                 204:
-                    description: No Content - note successfully deleted
+                    description: No Content - protocol successfully deleted
                 400:
                     description: Bad Request - invalid ID
                     content:
@@ -171,7 +179,7 @@ paths:
                     content:
                         application/json:
                             example:
-                                message: "Note not found!"
+                                message: "Protocol not found!"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -181,7 +189,7 @@ paths:
 
 components:
     schemas:
-        SimpleNote:
+        SimpleProtocol:
             type: object
             properties:
                 _id:
@@ -189,42 +197,53 @@ components:
                     example: "6833318fd414ea08fac843ec"
                 title:
                     type: string
-                    example: "Note title"
-                content:
+                    example: "Protocol title"
+                date:
                     type: string
-                    example: "Note content"
+                    example: "2025/01/01"
+                fileUrl:
+                    type: string
+                    example: "https://example.pdf"
                 createdAt:
                     type: string
                     format: date-time
                     example: "2025-05-25T15:04:47.780Z"
 
-        GetAllNotesResponse:
+        GetAllProtocolsResponse:
             type: array
             items:
-                $ref: "#/components/schemas/SimpleNote"
+                $ref: "#/components/schemas/SimpleProtocol"
 
-        CreateNoteRequest:
+        CreateProtocolRequest:
             type: object
             required:
                 - title
-                - content
+                - date
+                - fileUrl
             properties:
                 title:
                     type: string
-                    example: "New note Title"
-                content:
+                    example: "New protocol Title"
+                date:
                     type: string
-                    example: "New note content"
+                    example: "2025/01/01"
+                fileUrl:
+                    type: string
+                    example: "https://example.pdf"
 
-        EditNoteRequest:
+        EditProtocolRequest:
             type: object
             required:
                 - title
-                - content
+                - date
+                - fileUrl
             properties:
                 title:
                     type: string
                     example: "Edited Title"
-                content:
+                date:
                     type: string
-                    example: "Edited content"
+                    example: "2025/01/02"
+                fileUrl:
+                    type: string
+                    example: "https://editedExample.pdf"
