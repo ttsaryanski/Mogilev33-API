@@ -1,11 +1,13 @@
 import { Router } from "express";
 
-import protocolRoutes from "./protocolController.js";
-import offerRoutes from "./offerController.js";
-import inviteRoutes from "./inviteController.js";
+import authRoutes from "./authRoutes.js";
+import protocolRoutes from "./protocolRoutes.js";
+import offerRoutes from "./offerRoutes.js";
+import inviteRoutes from "./inviteRoutes.js";
 
 const routes = Router();
 
+routes.use("/auth", authRoutes);
 routes.use("/protocols", protocolRoutes);
 routes.use("/offers", offerRoutes);
 routes.use("/invitations", inviteRoutes);

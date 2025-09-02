@@ -15,3 +15,13 @@ spec:
                             secretKeyRef:
                                 name: cloud-db-url
                                 key: latest
+                      - name: JWT_SECRET
+                        valueFrom:
+                            secretKeyRef:
+                                name: jwt-secret
+                                key: latest
+                      - name: JWT_REFRESH_SECRET
+                        valueFrom:
+                            secretKeyRef:
+                                name: jwt-refresh-secret
+                                key: latest

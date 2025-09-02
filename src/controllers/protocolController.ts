@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 
+import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { isAdmin } from "../middlewares/isAdminMiddleware.js";
+
 import { ProtocolServicesTypes } from "../types/ServicesTypes.js";
 
 import { asyncErrorHandler } from "../utils/errorUtils/asyncErrorHandler.js";
@@ -21,6 +24,8 @@ export function protocolController(protocolService: ProtocolServicesTypes) {
 
     router.post(
         "/",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req: Request, res: Response) => {
             const resultData = createProtocolSchema.safeParse(req.body);
 
@@ -35,6 +40,8 @@ export function protocolController(protocolService: ProtocolServicesTypes) {
 
     router.put(
         "/:protocolId",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req, res) => {
             const resultId = mongooseIdSchema.safeParse(req.params.protocolId);
             if (!resultId.success) {
@@ -57,6 +64,8 @@ export function protocolController(protocolService: ProtocolServicesTypes) {
 
     router.delete(
         "/:protocolId",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req, res) => {
             const resultId = mongooseIdSchema.safeParse(req.params.protocolId);
             if (!resultId.success) {
@@ -70,6 +79,8 @@ export function protocolController(protocolService: ProtocolServicesTypes) {
 
     router.get(
         "/:protocolId",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req: Request, res: Response) => {
             const resultId = mongooseIdSchema.safeParse(req.params.protocolId);
             if (!resultId.success) {

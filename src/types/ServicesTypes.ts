@@ -44,8 +44,12 @@ export interface InviteServicesTypes {
 }
 
 export interface AuthServicesTypes {
-    register(data: CreateUserDataType): Promise<string>;
-    login(data: CreateUserDataType): Promise<string>;
-    logout(): Promise<void>;
-    getUserById(): Promise<UserResponseType>;
+    register(
+        data: CreateUserDataType
+    ): Promise<{ accessToken: string; refreshToken: string }>;
+    login(
+        data: CreateUserDataType
+    ): Promise<{ accessToken: string; refreshToken: string }>;
+    logout(token: { accessToken: string; refreshToken: string }): Promise<void>;
+    getUserById(id: string): Promise<UserResponseType>;
 }

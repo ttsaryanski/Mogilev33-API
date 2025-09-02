@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 
+import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { isAdmin } from "../middlewares/isAdminMiddleware.js";
+
 import { OfferServicesTypes } from "../types/ServicesTypes.js";
 
 import { asyncErrorHandler } from "../utils/errorUtils/asyncErrorHandler.js";
@@ -21,6 +24,8 @@ export function offerController(offerService: OfferServicesTypes) {
 
     router.post(
         "/",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req: Request, res: Response) => {
             const resultData = createOfferSchema.safeParse(req.body);
 
@@ -35,6 +40,8 @@ export function offerController(offerService: OfferServicesTypes) {
 
     router.put(
         "/:offerId",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req, res) => {
             const resultId = mongooseIdSchema.safeParse(req.params.offerId);
             if (!resultId.success) {
@@ -57,6 +64,8 @@ export function offerController(offerService: OfferServicesTypes) {
 
     router.delete(
         "/:offerId",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req, res) => {
             const resultId = mongooseIdSchema.safeParse(req.params.offerId);
             if (!resultId.success) {
@@ -70,6 +79,8 @@ export function offerController(offerService: OfferServicesTypes) {
 
     router.get(
         "/:offerId",
+        authMiddleware,
+        isAdmin,
         asyncErrorHandler(async (req: Request, res: Response) => {
             const resultId = mongooseIdSchema.safeParse(req.params.offerId);
             if (!resultId.success) {
