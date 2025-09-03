@@ -1,0 +1,63 @@
+name: Deploy to GCP Cloud Run
+
+on:
+    push:
+        branches:
+            - main
+
+env:
+    PROJECT_ID: mogilev33api
+    REGION: europe-west4
+    REPO_NAME: mogilev33-repo
+    SERVICE_NAME: mogilev33-api
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Authenticate to Google Cloud
+              uses: google-github-actions/auth@v1
+              with:
+                  credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run Prettier check
+              run: npm run format:check
+
+            - name: Run ESLint
+              run: npm run lint
+
+            - name: Validate OpenAPI spec
+              run: npm run validate
+
+            # - name: Run Tests
+            #   run: npm test
+
+            - name: Set up gcloud CLI
+              uses: google-github-actions/setup-gcloud@v1
+
+            - name: Configure Docker
+              run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+            - name: Build Docker Image
+              run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:latest .
+
+            - name: Push Docker Image
+              run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:latest
+
+            - name: Deploy to Cloud Run
+              run: |
+                  gcloud run deploy ${{ env.SERVICE_NAME }} \
+                    --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:latest \
+                    --region ${{ env.REGION }} \
+                    --platform managed \

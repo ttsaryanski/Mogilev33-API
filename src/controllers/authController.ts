@@ -8,6 +8,7 @@ import { RequestUser } from "../types/express.js";
 import { asyncErrorHandler } from "../utils/errorUtils/asyncErrorHandler.js";
 import { CustomError } from "../utils/errorUtils/customError.js";
 import { createAccessTokens } from "../services/authService.js";
+import { loginLimiter } from "../utils/rateLimiter.js";
 
 import { createUserSchema } from "../validators/user.schema.js";
 
@@ -40,6 +41,7 @@ export function authController(authService: AuthServicesTypes) {
 
     router.post(
         "/login",
+        loginLimiter,
         asyncErrorHandler(async (req, res: Response) => {
             const resultData = createUserSchema.safeParse(req.body);
 
