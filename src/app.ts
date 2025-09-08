@@ -14,9 +14,6 @@ const app = express();
 expressInit(app);
 
 app.use("/api", routes);
-app.get("/", (req, res) => {
-    res.send("Mogilev33 API is running!");
-});
 app.use((err: CsrfError, req: Request, res: Response, next: NextFunction) => {
     if (err.code === "EBADCSRFTOKEN") {
         return res.status(403).json({ error: "Invalid CSRF token" });
@@ -24,5 +21,8 @@ app.use((err: CsrfError, req: Request, res: Response, next: NextFunction) => {
     next(err);
 });
 app.use(errorHandler);
+app.get("/", (req, res) => {
+    res.send("Mogilev33 API is running!");
+});
 
 export default app;

@@ -7,6 +7,225 @@ servers:
     - url: http://localhost:3000/api
 
 paths:
+    /auth/register:
+        post:
+            summary: User registration
+            tags: [Auth]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/AuthLoginRegisterRequest"
+            responses:
+                201:
+                    description: Register is successful
+                    headers:
+                        Set-Cookie:
+                            description: Set JWT in cookie
+                            schema:
+                                type: string
+                                example: refreshToken=eyJhbGciOiJIUzI1...; Path=/; HttpOnly; Secure; SameSite=none
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/AuthLoginRegisterResponse"
+                400:
+                    description: Bad Request - Invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidEmail:
+                                    summary: Invalid email
+                                    value:
+                                        message: "Invalid email format!"
+                                invalidPassword:
+                                    summary: Invalid password
+                                    value:
+                                        message: "Password must be at least 6 characters!"
+                409:
+                    description: Conflict - Email already registered
+                    content:
+                        application/json:
+                            example:
+                                message: "This email already registered!"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /auth/login:
+        post:
+            summary: User login
+            tags: [Auth]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/AuthLoginRegisterRequest"
+            responses:
+                201:
+                    description: Login is successful
+                    headers:
+                        Set-Cookie:
+                            description: Set JWT in cookie
+                            schema:
+                                type: string
+                                example: refreshToken=eyJhbGciOiJIUzI1...; Path=/; HttpOnly; Secure; SameSite=none
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/AuthLoginRegisterResponse"
+                400:
+                    description: Bad Request - Invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidEmail:
+                                    summary: Invalid email
+                                    value:
+                                        message: "Invalid email format!"
+                                invalidPassword:
+                                    summary: Invalid password
+                                    value:
+                                        message: "Password must be at least 6 characters!"
+                401:
+                    description: Unauthorized - Invalid password
+                    content:
+                        application/json:
+                            example:
+                                message: "Password does not match!"
+                404:
+                    description: Not Found - User does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "User does not exist!"
+                429:
+                    description: Too Many Requests - Too many login attempts
+                    content:
+                        application/json:
+                            example:
+                                message: "Too many login attempts. Please try again in 15 minutes."
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /auth/logout:
+        post:
+            summary: User logout
+            tags: [Auth]
+            security:
+                - Mogilev33: []
+            responses:
+                200:
+                    description: Logout is successful
+                    headers:
+                        Set-Cookie:
+                            description: Clear JWT cookie
+                            schema:
+                                type: string
+                                example: refreshToken=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0
+                    content:
+                        application/json:
+                            example:
+                                message: "Logged out successfully"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            example:
+                                message: "Invalid token!"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /auth/profile:
+        get:
+            summary: Gets user profile
+            tags: [Auth]
+            security:
+                - Mogilev33: []
+            responses:
+                200:
+                    description: OK - User profile retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleUser"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            example:
+                                message: "Invalid token!"
+                404:
+                    description: Not Found - User does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "There is no user with this id!"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /auth/refresh:
+        post:
+            summary: Refresh access token
+            description: Generate and return a new access token using the refresh token stored in cookies.
+            tags: [Auth]
+            security:
+                - Mogilev33: []
+            responses:
+                200:
+                    description: New access token issued
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/AuthLoginRegisterResponse"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            example:
+                                message: "Invalid token!"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
     /protocols:
         get:
             summary: Gets all protocols
@@ -63,6 +282,7 @@ paths:
                         application/json:
                             example:
                                 message: "Internal server error..."
+
     /protocols/{protocolId}:
         get:
             summary: Gets a protocol by ID
@@ -186,6 +406,7 @@ paths:
                         application/json:
                             example:
                                 message: "Internal server error..."
+
     /invitations:
         get:
             summary: Gets all invitations
@@ -242,6 +463,7 @@ paths:
                         application/json:
                             example:
                                 message: "Internal server error..."
+
     /invitations/{inviteId}:
         get:
             summary: Gets a invite by ID
@@ -365,6 +587,7 @@ paths:
                         application/json:
                             example:
                                 message: "Internal server error..."
+
     /offers:
         get:
             summary: Gets all offers
@@ -425,6 +648,7 @@ paths:
                         application/json:
                             example:
                                 message: "Internal server error..."
+
     /offers/{offerId}:
         get:
             summary: Gets a offer by ID
@@ -554,7 +778,49 @@ paths:
                                 message: "Internal server error..."
 
 components:
+    securitySchemes:
+        Mogilev33:
+            type: apiKey
+            in: cookie
+            name: refreshToken
     schemas:
+        AuthLoginRegisterRequest:
+            type: object
+            required:
+                - email
+                - password
+            properties:
+                email:
+                    type: string
+                    example: example@email.com
+                password:
+                    type: string
+                    example: examplePassword
+
+        AuthLoginRegisterResponse:
+            type: object
+            properties:
+                accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1...
+
+        SimpleUser:
+            type: object
+            properties:
+                _id:
+                    type: string
+                    example: "6833318fd414ea08fac843ec"
+                email:
+                    type: string
+                    example: "example@email.com"
+                role:
+                    type: string
+                    example: "user"
+                createdAt:
+                    type: string
+                    format: date-time
+                    example: "2025-05-25T15:04:47.780Z"
+
         SimpleProtocolAndInvite:
             type: object
             properties:

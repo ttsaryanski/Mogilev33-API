@@ -18,8 +18,6 @@ export function authController(authService: AuthServicesTypes) {
     router.post(
         "/register",
         asyncErrorHandler(async (req, res: Response) => {
-            console.log(req.body);
-
             const resultData = createUserSchema.safeParse(req.body);
 
             if (!resultData.success) {
@@ -113,7 +111,7 @@ export function authController(authService: AuthServicesTypes) {
                 role: user.role,
             });
 
-            res.json({ accessToken: tokens.accessToken });
+            res.status(200).json({ accessToken: tokens.accessToken });
         })
     );
 
