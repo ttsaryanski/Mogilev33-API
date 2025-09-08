@@ -2,6 +2,10 @@ openapi: 3.0.0
 info:
     title: Mogilev33 REST API
     version: 1.0.0
+    description: |
+        This API is rate limited:
+        - Global: max 100 requests per 15 minutes per IP
+        - Endpoint /auth/login: max 5 requests per 15 minutes per IP
 
 servers:
     - url: http://localhost:3000/api
@@ -49,6 +53,8 @@ paths:
                         application/json:
                             example:
                                 message: "This email already registered!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -148,6 +154,8 @@ paths:
                         application/json:
                             example:
                                 message: "Invalid token!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -186,6 +194,8 @@ paths:
                         application/json:
                             example:
                                 message: "There is no user with this id!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -219,6 +229,8 @@ paths:
                         application/json:
                             example:
                                 message: "Invalid token!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -237,6 +249,8 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/GetAllProtocolsAndInvitationsResponse"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -246,6 +260,8 @@ paths:
         post:
             summary: Creates a new protocol
             tags: [Protocols]
+            security:
+                - Mogilev33: []
             requestBody:
                 required: true
                 content:
@@ -276,6 +292,27 @@ paths:
                                     summary: Invalid fileUrl
                                     value:
                                         message: "Invalid file URL!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -287,6 +324,8 @@ paths:
         get:
             summary: Gets a protocol by ID
             tags: [Protocols]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: protocolId
@@ -307,12 +346,33 @@ paths:
                         application/json:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - protocol does not exist
                     content:
                         application/json:
                             example:
                                 message: "Protocol not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -322,6 +382,8 @@ paths:
         put:
             summary: Updates a protocol by ID
             tags: [Protocols]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: protocolId
@@ -363,12 +425,33 @@ paths:
                                     summary: Invalid fileUrl
                                     value:
                                         message: "Invalid file URL!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - protocol does not exist
                     content:
                         application/json:
                             example:
                                 message: "Protocol not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -378,6 +461,8 @@ paths:
         delete:
             summary: Deletes a protocol by ID
             tags: [Protocols]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: protocolId
@@ -394,12 +479,33 @@ paths:
                         application/json:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - protocol does not exist
                     content:
                         application/json:
                             example:
                                 message: "Protocol not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -418,6 +524,8 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/GetAllProtocolsAndInvitationsResponse"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -427,6 +535,8 @@ paths:
         post:
             summary: Creates a new invite
             tags: [Invitations]
+            security:
+                - Mogilev33: []
             requestBody:
                 required: true
                 content:
@@ -457,6 +567,27 @@ paths:
                                     summary: Invalid fileUrl
                                     value:
                                         message: "Invalid file URL!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -468,6 +599,8 @@ paths:
         get:
             summary: Gets a invite by ID
             tags: [Invitations]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: inviteId
@@ -488,12 +621,33 @@ paths:
                         application/json:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - invite does not exist
                     content:
                         application/json:
                             example:
                                 message: "Invite not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -503,6 +657,8 @@ paths:
         put:
             summary: Updates a invite by ID
             tags: [Invitations]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: inviteId
@@ -544,12 +700,33 @@ paths:
                                     summary: Invalid fileUrl
                                     value:
                                         message: "Invalid file URL!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - invite does not exist
                     content:
                         application/json:
                             example:
                                 message: "Invite not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -559,6 +736,8 @@ paths:
         delete:
             summary: Deletes a invite by ID
             tags: [Invitations]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: inviteId
@@ -575,12 +754,33 @@ paths:
                         application/json:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - invite does not exist
                     content:
                         application/json:
                             example:
                                 message: "Invite not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -599,6 +799,8 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/GetAllOffers"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - Server error
                     content:
@@ -608,6 +810,8 @@ paths:
         post:
             summary: Creates a new offer
             tags: [Offers]
+            security:
+                - Mogilev33: []
             requestBody:
                 required: true
                 content:
@@ -642,6 +846,27 @@ paths:
                                     summary: Invalid fileUrl
                                     value:
                                         message: "Invalid file URL!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -653,6 +878,8 @@ paths:
         get:
             summary: Gets a offer by ID
             tags: [Offers]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: offerId
@@ -673,12 +900,33 @@ paths:
                         application/json:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - offer does not exist
                     content:
                         application/json:
                             example:
                                 message: "Offer not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -688,6 +936,8 @@ paths:
         put:
             summary: Updates a offer by ID
             tags: [Offers]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: offerId
@@ -733,12 +983,33 @@ paths:
                                     summary: Invalid fileUrl
                                     value:
                                         message: "Invalid file URL!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - offer does not exist
                     content:
                         application/json:
                             example:
                                 message: "Offer not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -748,6 +1019,8 @@ paths:
         delete:
             summary: Deletes a offer by ID
             tags: [Offers]
+            security:
+                - Mogilev33: []
             parameters:
                 - in: path
                   name: offerId
@@ -764,12 +1037,33 @@ paths:
                         application/json:
                             example:
                                 message: "Id must be a valid MongooseDB ObjectId!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
                 404:
                     description: Not Found - offer does not exist
                     content:
                         application/json:
                             example:
                                 message: "Offer not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
                 500:
                     description: Internal Server Error - server error
                     content:
@@ -783,6 +1077,17 @@ components:
             type: apiKey
             in: cookie
             name: refreshToken
+    responses:
+        TooManyRequests:
+            description: Too many requests
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                                example: Too many requests from this IP, please try again later.
     schemas:
         AuthLoginRegisterRequest:
             type: object
