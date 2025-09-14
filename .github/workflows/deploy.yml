@@ -40,8 +40,8 @@ jobs:
             - name: Validate OpenAPI spec
               run: npm run validate
 
-            # - name: Run Tests
-            #   run: npm test
+            - name: Run Tests
+              run: npm test
 
             - name: Set up gcloud CLI
               uses: google-github-actions/setup-gcloud@v1

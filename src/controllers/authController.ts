@@ -67,7 +67,7 @@ export function authController(authService: AuthServicesTypes) {
             const refreshToken = req.cookies?.refreshToken;
 
             if (!refreshToken) {
-                throw new CustomError("No refresh token provided", 401);
+                throw new CustomError("No refresh token provided!", 401);
             }
 
             await authService.logout({ refreshToken, accessToken: "" });
@@ -78,7 +78,7 @@ export function authController(authService: AuthServicesTypes) {
                     secure: true,
                     sameSite: "none",
                 })
-                .json({ message: "Logged out successfully" });
+                .json({ message: "Logged out successfully!" });
         })
     );
 
@@ -89,7 +89,7 @@ export function authController(authService: AuthServicesTypes) {
             const userId = req.user?._id;
 
             if (!userId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(401).json({ message: "Unauthorized!" });
                 return;
             }
 
