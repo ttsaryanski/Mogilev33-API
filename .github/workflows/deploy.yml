@@ -41,6 +41,12 @@ jobs:
             - name: Validate OpenAPI spec
               run: npm run validate
 
+            - name: Set JWT_SECRET
+              run: echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+
+            - name: Set JWT_REFRESH_SECRET
+              run: echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> $GITHUB_ENV
+
             - name: Run Tests
               run: npm test
 
