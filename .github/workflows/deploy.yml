@@ -13,11 +13,8 @@ env:
 jobs:
     deploy:
         runs-on: ubuntu-latest
+        environment: Secrets environments
 
-        env:
-            CLOUD_DB_URL: ${{ secrets.CLOUD_DB_URL }}
-            JWT_SECRET: ${{ secrets.JWT_SECRET }}
-            JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v3
