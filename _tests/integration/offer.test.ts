@@ -21,7 +21,6 @@ jest.mock("../../src/middlewares/isAdminMiddleware.js", () => ({
 
 import app from "../../src/app";
 import { Offer, IOffer } from "../../src/models/Offer.js";
-
 import { CreateOfferDataType } from "../../src/validators/offer.schema";
 
 describe("GET /offers", () => {

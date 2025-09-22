@@ -259,7 +259,7 @@ describe("Invites Controller", () => {
         );
     });
 
-    test("GET /invitations/inviteId - should return invite by ID", async () => {
+    test("GET /invitations/:inviteId - should return invite by ID", async () => {
         const mockData = {
             title: "New invite",
             date: "2023/12/31",
@@ -288,7 +288,7 @@ describe("Invites Controller", () => {
         );
     });
 
-    test("GET /invitations/inviteId - should return 500 on service error", async () => {
+    test("GET /invitations/:inviteId - should return 500 on service error", async () => {
         mockInvitesService.getById.mockRejectedValue(
             new Error("Service failure!")
         );
