@@ -47,6 +47,9 @@ jobs:
             - name: Set JWT_REFRESH_SECRET
               run: echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> $GITHUB_ENV
 
+            - name: Set GCS_BUCKET_NAME
+              run: echo "GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}" >> $GITHUB_ENV
+
             - name: Run Tests
               run: npm test
 
