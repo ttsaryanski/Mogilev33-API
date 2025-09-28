@@ -76,7 +76,7 @@ export function inviteController(inviteService: InviteServicesTypes) {
                 throw new CustomError(resultId.error.issues[0].message, 400);
             }
 
-            await inviteService.remove(resultId.data);
+            await inviteService.removeAndRemoveFromGCS(resultId.data);
             res.sendStatus(204);
         })
     );

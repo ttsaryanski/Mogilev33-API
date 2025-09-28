@@ -30,8 +30,11 @@ jest.mock("../../../src/middlewares/isAdminMiddleware.js", () => ({
 const mockProtocolsService: jest.Mocked<ProtocolServicesTypes> = {
     getAll: jest.fn(),
     create: jest.fn(),
+    createWithFile: jest.fn(),
     edit: jest.fn(),
+    editWithFile: jest.fn(),
     remove: jest.fn(),
+    removeAndRemoveFromGCS: jest.fn(),
     getById: jest.fn(),
 };
 
@@ -250,7 +253,9 @@ describe("Protocols Controller", () => {
 
         expect(res.status).toBe(204);
         expect(resBody).toEqual({});
-        expect(mockProtocolsService.remove).toHaveBeenCalledWith(validId);
+        expect(
+            mockProtocolsService.removeAndRemoveFromGCS
+        ).toHaveBeenCalledWith(validId);
     });
 
     test("DELETE /protocols/:protocolId - should return 400 for invalid invite ID", async () => {

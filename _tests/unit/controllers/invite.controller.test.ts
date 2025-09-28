@@ -30,8 +30,11 @@ jest.mock("../../../src/middlewares/isAdminMiddleware.js", () => ({
 const mockInvitesService: jest.Mocked<InviteServicesTypes> = {
     getAll: jest.fn(),
     create: jest.fn(),
+    createWithFile: jest.fn(),
     edit: jest.fn(),
+    editWithFile: jest.fn(),
     remove: jest.fn(),
+    removeAndRemoveFromGCS: jest.fn(),
     getById: jest.fn(),
 };
 
@@ -247,7 +250,9 @@ describe("Invites Controller", () => {
 
         expect(res.status).toBe(204);
         expect(resBody).toEqual({});
-        expect(mockInvitesService.remove).toHaveBeenCalledWith(validId);
+        expect(mockInvitesService.removeAndRemoveFromGCS).toHaveBeenCalledWith(
+            validId
+        );
     });
 
     test("DELETE /invitations/:inviteId - should return 400 for invalid invite ID", async () => {

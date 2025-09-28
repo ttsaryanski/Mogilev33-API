@@ -76,7 +76,7 @@ export function protocolController(protocolService: ProtocolServicesTypes) {
                 throw new CustomError(resultId.error.issues[0].message, 400);
             }
 
-            await protocolService.remove(resultId.data);
+            await protocolService.removeAndRemoveFromGCS(resultId.data);
             res.sendStatus(204);
         })
     );

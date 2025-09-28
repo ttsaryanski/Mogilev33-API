@@ -30,8 +30,11 @@ jest.mock("../../../src/middlewares/isAdminMiddleware.js", () => ({
 const mockOffersService: jest.Mocked<OfferServicesTypes> = {
     getAll: jest.fn(),
     create: jest.fn(),
+    createWithFile: jest.fn(),
     edit: jest.fn(),
+    editWithFile: jest.fn(),
     remove: jest.fn(),
+    removeAndRemoveFromGCS: jest.fn(),
     getById: jest.fn(),
 };
 
@@ -283,7 +286,9 @@ describe("Offers Controller", () => {
 
         expect(res.status).toBe(204);
         expect(resBody).toEqual({});
-        expect(mockOffersService.remove).toHaveBeenCalledWith(validId);
+        expect(mockOffersService.removeAndRemoveFromGCS).toHaveBeenCalledWith(
+            validId
+        );
     });
 
     test("DELETE /offers/:offerId - should return 400 for invalid offer ID", async () => {
