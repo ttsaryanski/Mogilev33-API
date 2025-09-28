@@ -7,8 +7,12 @@ import { OfferServicesTypes } from "../types/ServicesTypes.js";
 
 import { asyncErrorHandler } from "../utils/errorUtils/asyncErrorHandler.js";
 import { CustomError } from "../utils/errorUtils/customError.js";
+import upload from "../utils/upload/multerStorage.js";
 
-import { createOfferSchema } from "../validators/offer.schema.js";
+import {
+    createOfferSchema,
+    createOfferWithUploadSchema,
+} from "../validators/offer.schema.js";
 import { mongooseIdSchema } from "../validators/mongooseId.schema.js";
 
 export function offerController(offerService: OfferServicesTypes) {
@@ -72,7 +76,7 @@ export function offerController(offerService: OfferServicesTypes) {
                 throw new CustomError(resultId.error.issues[0].message, 400);
             }
 
-            await offerService.remove(resultId.data);
+            await offerService.removeAndRemoveFromGCS(resultId.data);
             res.sendStatus(204);
         })
     );
@@ -87,6 +91,68 @@ export function offerController(offerService: OfferServicesTypes) {
                 throw new CustomError(resultId.error.issues[0].message, 400);
             }
             const offer = await offerService.getById(resultId.data);
+            res.status(200).send(offer);
+        })
+    );
+
+    router.post(
+        "/upload",
+        authMiddleware,
+        isAdmin,
+        upload.single("file"),
+        asyncErrorHandler(async (req, res) => {
+            const file = req.file;
+            if (!file) {
+                throw new CustomError("File is required for upload", 400);
+            }
+            const data = {
+                ...req.body,
+                price: Number(req.body.price),
+                file: file,
+            };
+
+            const resultData = createOfferWithUploadSchema.safeParse(data);
+            if (!resultData.success) {
+                throw new CustomError(resultData.error.issues[0].message, 400);
+            }
+
+            const offer = await offerService.createWithFile(data, file);
+            res.status(201).send(offer);
+        })
+    );
+
+    router.put(
+        "/upload/:offerId",
+        authMiddleware,
+        isAdmin,
+        upload.single("file"),
+        asyncErrorHandler(async (req, res) => {
+            const file = req.file;
+            if (!file) {
+                throw new CustomError("File is required for upload", 400);
+            }
+            const data = {
+                ...req.body,
+                price: Number(req.body.price),
+                file: file,
+            };
+
+            const resultId = mongooseIdSchema.safeParse(req.params.offerId);
+            if (!resultId.success) {
+                throw new CustomError(resultId.error.issues[0].message, 400);
+            }
+
+            const resultData = createOfferWithUploadSchema.safeParse(data);
+            if (!resultData.success) {
+                throw new CustomError(resultData.error.issues[0].message, 400);
+            }
+
+            const offer = await offerService.editWithFile(
+                resultId.data,
+                data,
+                file
+            );
+
             res.status(200).send(offer);
         })
     );

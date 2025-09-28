@@ -1,4 +1,5 @@
 import { Error as MongooseError, mongo } from "mongoose";
+import multer from "multer";
 
 import { ErrorTypes } from "../../types/ErrorTypes.js";
 
@@ -19,6 +20,7 @@ export const createErrorMsg = (
         | MongooseError.ValidationError
         | MongooseError.CastError
         | MongoDuplicateError
+        | multer.MulterError
         | SyntaxError
         | CustomError
         | null
@@ -42,6 +44,10 @@ export const createErrorMsg = (
     ) {
         const field = Object.keys((err as MongoDuplicateError).keyValue)[0];
         return `Duplicate ${field}: "${(err as MongoDuplicateError).keyValue[field]}" already exists!`;
+    }
+
+    if ("code" in err && err?.code === "LIMIT_FILE_SIZE") {
+        return "File size should not exceed 5MB!";
     }
 
     if (err?.name === "CustomError" && err.message) {

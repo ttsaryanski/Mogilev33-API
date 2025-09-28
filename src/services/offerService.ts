@@ -1,8 +1,13 @@
 import { Offer } from "../models/Offer.js";
 
+import { gcsService } from "./gcsService.js";
+
 import { OfferServicesTypes } from "../types/ServicesTypes.js";
 import { OfferResponseType } from "../types/OfferTypes.js";
-import { CreateOfferDataType } from "../validators/offer.schema.js";
+import {
+    CreateOfferDataType,
+    CreateOfferWithUploadDataType,
+} from "../validators/offer.schema.js";
 
 import { CustomError } from "../utils/errorUtils/customError.js";
 
@@ -22,6 +27,24 @@ export const offerService: OfferServicesTypes = {
 
     async create(data: CreateOfferDataType): Promise<OfferResponseType> {
         const newOffer = (await Offer.create(data)) as OfferResponseType;
+        return {
+            _id: newOffer._id.toString(),
+            title: newOffer.title,
+            company: newOffer.company,
+            price: newOffer.price,
+            fileUrl: newOffer.fileUrl,
+            createdAt: newOffer.createdAt,
+        };
+    },
+
+    async createWithFile(
+        data: CreateOfferWithUploadDataType,
+        file: Express.Multer.File
+    ): Promise<OfferResponseType> {
+        const publicUrl = await gcsService.uploadFile(file);
+        const payload = { ...data, fileUrl: publicUrl };
+
+        const newOffer = (await Offer.create(payload)) as OfferResponseType;
         return {
             _id: newOffer._id.toString(),
             title: newOffer.title,
@@ -54,12 +77,62 @@ export const offerService: OfferServicesTypes = {
         };
     },
 
+    async editWithFile(
+        offerId: string,
+        data: CreateOfferWithUploadDataType,
+        file: Express.Multer.File
+    ): Promise<OfferResponseType> {
+        const offer = await Offer.findById(offerId);
+        if (!offer) {
+            throw new CustomError("Offer not found!", 404);
+        } else {
+            const filePath = offer.fileUrl.split(
+                `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/`
+            )[1];
+            if (filePath) {
+                await gcsService.deleteFile(filePath);
+            }
+        }
+
+        const publicUrl = await gcsService.uploadFile(file);
+        const payload = { ...data, fileUrl: publicUrl };
+        const updatedOffer = (await Offer.findByIdAndUpdate(offerId, payload, {
+            runValidators: true,
+            new: true,
+        })) as OfferResponseType;
+
+        return {
+            _id: updatedOffer._id.toString(),
+            title: updatedOffer.title,
+            company: updatedOffer.company,
+            price: updatedOffer.price,
+            fileUrl: updatedOffer.fileUrl,
+            createdAt: updatedOffer.createdAt,
+        };
+    },
+
     async remove(offerId: string): Promise<void> {
         const result = await Offer.findByIdAndDelete(offerId);
 
         if (!result) {
             throw new CustomError("Offer not found!", 404);
         }
+    },
+
+    async removeAndRemoveFromGCS(offerId: string): Promise<void> {
+        const offer = await Offer.findById(offerId);
+        if (!offer) {
+            throw new CustomError("Offer not found!", 404);
+        } else {
+            const filePath = offer.fileUrl.split(
+                `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/`
+            )[1];
+            if (filePath) {
+                await gcsService.deleteFile(filePath);
+            }
+        }
+
+        await Offer.findByIdAndDelete(offerId);
     },
 
     async getById(offerId: string): Promise<OfferResponseType> {

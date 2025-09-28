@@ -25,3 +25,8 @@ spec:
                             secretKeyRef:
                                 name: jwt-refresh-secret
                                 key: latest
+                      - name: GCS_BUCKET_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: gcs-bucket-name
+                                key: latest
