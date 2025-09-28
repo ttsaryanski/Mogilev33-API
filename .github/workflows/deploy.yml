@@ -76,7 +76,7 @@ jobs:
             - name: Apply service.yml configuration
               run: |
                   gcloud run services replace service.yml \
-                    --region ${{ env.REGION }}
+                    --region ${{ env.REGION }} \
                     --platform managed \
                     --project ${{ env.PROJECT_ID }}
 
