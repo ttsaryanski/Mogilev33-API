@@ -12,7 +12,7 @@ interface MulterFile {
 export async function uploadFileToGCS(file: MulterFile): Promise<string> {
     return new Promise((resolve, reject) => {
         if (!file) {
-            return reject("No file provided");
+            return reject("No file provided!");
         }
 
         const blob = bucket.file(file.originalname);

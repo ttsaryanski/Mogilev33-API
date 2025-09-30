@@ -513,6 +513,159 @@ paths:
                             example:
                                 message: "Internal server error..."
 
+    /protocols/upload:
+        post:
+            summary: Creates a new protocol with file upload to GCS
+            tags: [Protocols]
+            security:
+                - Mogilev33: []
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: "#/components/schemas/CreateProtocolAndInviteWithUploadRequest"
+            responses:
+                201:
+                    description: Created - protocol successfully created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Protocol title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
+                                    value:
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFile:
+                                    summary: Invalid file - no file provided
+                                    value:
+                                        message: "No file provided!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                413:
+                    description: Payload Too Large - File too large
+                    content:
+                        application/json:
+                            example:
+                                message: "File size should not exceed 5MB!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /protocols/upload/{protocolId}:
+        put:
+            summary: Updates a protocol by ID with file upload to GCS
+            tags: [Protocols]
+            security:
+                - Mogilev33: []
+            parameters:
+                - in: path
+                  name: protocolId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the protocol (valid ObjectId - 24 characters)
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: "#/components/schemas/EditProtocolAndInviteWithUploadRequest"
+            responses:
+                200:
+                    description: Ok - protocol successfully updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Protocol title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
+                                    value:
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFile:
+                                    summary: Invalid file - no file provided
+                                    value:
+                                        message: "No file provided!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                404:
+                    description: Not Found - protocol does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Protocol not found!"
+                413:
+                    description: Payload Too Large - File too large
+                    content:
+                        application/json:
+                            example:
+                                message: "File size should not exceed 5MB!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
     /invitations:
         get:
             summary: Gets all invitations
@@ -779,6 +932,159 @@ paths:
                         application/json:
                             example:
                                 message: "Invite not found!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /invitations/upload:
+        post:
+            summary: Creates a new invite with file upload to GCS
+            tags: [Invitations]
+            security:
+                - Mogilev33: []
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: "#/components/schemas/CreateProtocolAndInviteWithUploadRequest"
+            responses:
+                201:
+                    description: Created - invite successfully created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Invite title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
+                                    value:
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFile:
+                                    summary: Invalid file - no file provided
+                                    value:
+                                        message: "No file provided!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                413:
+                    description: Payload Too Large - File too large
+                    content:
+                        application/json:
+                            example:
+                                message: "File size should not exceed 5MB!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /invitations/upload/{inviteId}:
+        put:
+            summary: Updates a invite by ID with file upload to GCS
+            tags: [Invitations]
+            security:
+                - Mogilev33: []
+            parameters:
+                - in: path
+                  name: inviteId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the invite (valid ObjectId - 24 characters)
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: "#/components/schemas/EditProtocolAndInviteWithUploadRequest"
+            responses:
+                200:
+                    description: Ok - invite successfully updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleProtocolAndInvite"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Invite title should be at least 3 characters long!"
+                                invalidDate:
+                                    summary: Invalid date
+                                    value:
+                                        message: "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+                                invalidFile:
+                                    summary: Invalid file - no file provided
+                                    value:
+                                        message: "No file provided!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                404:
+                    description: Not Found - invite does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Invite not found!"
+                413:
+                    description: Payload Too Large - File too large
+                    content:
+                        application/json:
+                            example:
+                                message: "File size should not exceed 5MB!"
                 429:
                     $ref: "#/components/responses/TooManyRequests"
                 500:
@@ -1071,6 +1377,167 @@ paths:
                             example:
                                 message: "Internal server error..."
 
+    /offers/upload:
+        post:
+            summary: Creates a new offer with file upload to GCS
+            tags: [Offers]
+            security:
+                - Mogilev33: []
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: "#/components/schemas/CreateOfferWithUploadRequest"
+            responses:
+                201:
+                    description: Created - offer successfully created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleOffer"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Offer title should be at least 3 characters long!"
+                                invalidCompany:
+                                    summary: Invalid company name
+                                    value:
+                                        message: "Company name should be at least 2 characters long!"
+                                invalidPrice:
+                                    summary: Invalid price
+                                    value:
+                                        message: "Price must be a positive number!"
+                                invalidFile:
+                                    summary: Invalid file - no file provided
+                                    value:
+                                        message: "No file provided!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                413:
+                    description: Payload Too Large - File too large
+                    content:
+                        application/json:
+                            example:
+                                message: "File size should not exceed 5MB!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
+                500:
+                    description: Internal Server Error - Server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
+    /offers/upload/{offerlId}:
+        put:
+            summary: Updates a offer by ID with file upload to GCS
+            tags: [Offers]
+            security:
+                - Mogilev33: []
+            parameters:
+                - in: path
+                  name: offerId
+                  required: true
+                  schema:
+                      type: string
+                  description: ID of the offer (valid ObjectId - 24 characters)
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            $ref: "#/components/schemas/EditOfferWithUploadRequest"
+            responses:
+                200:
+                    description: Ok - offer successfully updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SimpleOffer"
+                400:
+                    description: Bad Request - invalid data
+                    content:
+                        application/json:
+                            examples:
+                                invalidTitle:
+                                    summary: Invalid title
+                                    value:
+                                        message: "Offer title should be at least 3 characters long!"
+                                invalidCompany:
+                                    summary: Invalid company name
+                                    value:
+                                        message: "Company name should be at least 2 characters long!"
+                                invalidPrice:
+                                    summary: Invalid price
+                                    value:
+                                        message: "Price must be a positive number!"
+                                invalidFile:
+                                    summary: Invalid file - no file provided
+                                    value:
+                                        message: "No file provided!"
+                401:
+                    description: Unauthorized - Missing token
+                    content:
+                        application/json:
+                            example:
+                                message: "Missing token!"
+                403:
+                    description: Forbidden - Access denied
+                    content:
+                        application/json:
+                            examples:
+                                InvalidToken:
+                                    summary: Invalid refresh token
+                                    value:
+                                        message: "Invalid token!"
+                                AdminAccess:
+                                    summary: Admin access required
+                                    value:
+                                        message: "Admin access required!"
+                404:
+                    description: Not Found - offer does not exist
+                    content:
+                        application/json:
+                            example:
+                                message: "Offer not found!"
+                413:
+                    description: Payload Too Large - File too large
+                    content:
+                        application/json:
+                            example:
+                                message: "File size should not exceed 5MB!"
+                429:
+                    $ref: "#/components/responses/TooManyRequests"
+                500:
+                    description: Internal Server Error - server error
+                    content:
+                        application/json:
+                            example:
+                                message: "Internal server error..."
+
 components:
     securitySchemes:
         Mogilev33:
@@ -1168,6 +1635,40 @@ components:
                     type: string
                     example: "https://newExample.pdf"
 
+        CreateProtocolAndInviteWithUploadRequest:
+            type: object
+            required:
+                - title
+                - date
+                - file
+            properties:
+                title:
+                    type: string
+                    example: "New title"
+                date:
+                    type: string
+                    example: "2025/01/01"
+                file:
+                    type: string
+                    format: binary
+
+        EditProtocolAndInviteWithUploadRequest:
+            type: object
+            required:
+                - title
+                - date
+                - file
+            properties:
+                title:
+                    type: string
+                    example: "Edited title"
+                date:
+                    type: string
+                    example: "2025/02/02"
+                file:
+                    type: string
+                    format: binary
+
         EditProtocolAndInviteRequest:
             type: object
             required:
@@ -1180,7 +1681,7 @@ components:
                     example: "Edited title"
                 date:
                     type: string
-                    example: "2025/01/02"
+                    example: "2025/02/02"
                 fileUrl:
                     type: string
                     example: "https://editedExample.pdf"
@@ -1234,6 +1735,27 @@ components:
                     type: string
                     example: "https://newExample.pdf"
 
+        CreateOfferWithUploadRequest:
+            type: object
+            required:
+                - title
+                - company
+                - price
+                - file
+            properties:
+                title:
+                    type: string
+                    example: "New title"
+                company:
+                    type: string
+                    example: "New company"
+                price:
+                    type: number
+                    example: 111
+                file:
+                    type: string
+                    format: binary
+
         EditOfferRequest:
             type: object
             required:
@@ -1254,3 +1776,24 @@ components:
                 fileUrl:
                     type: string
                     example: "https://editedExample.pdf"
+
+        EditOfferWithUploadRequest:
+            type: object
+            required:
+                - title
+                - company
+                - price
+                - file
+            properties:
+                title:
+                    type: string
+                    example: "Edited title"
+                company:
+                    type: string
+                    example: "Edited company"
+                price:
+                    type: number
+                    example: 222
+                file:
+                    type: string
+                    format: binary

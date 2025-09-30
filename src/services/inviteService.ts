@@ -81,7 +81,7 @@ export const inviteService: InviteServicesTypes = {
     ): Promise<InviteResponseType> {
         const invite = await Invite.findById(inviteId);
         if (!invite) {
-            throw new CustomError("Protocol not found!", 404);
+            throw new CustomError("Invite not found!", 404);
         } else {
             const filePath = invite.fileUrl.split(
                 `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/`
