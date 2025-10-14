@@ -44,16 +44,29 @@ npm install
 - **CLOUD_DB_URL**: The connection string for a cloud database (e.g., MongoDB Atlas).  
   _Example:_ `mongodb+srv://username:password@cluster0.mongodb.net/dbname`
 
+- **JWT_SECRET**: A strong, random secret key for signing JSON Web Tokens (JWT).  
+  _Example:_ `your_super_secret_key`
+
+- **JWT_REFRESH_SECRET**: A strong, random secret key for signing JSON Web Tokens (JWT).  
+  _Example:_ `your_super_secret_key`
+
+- **GCS_BUCKET_NAME**: Bucket name for GCS claud storage.  
+  _Example:_ `your_bucket_name`
+
 ### Steps to Set Up `.env`:
 
 1. Create a file named `.env` in the root directory.
-2. Add the required environment variables in the following format:
+2. Log in to GCP locally.
+3. Add the required environment variables in the following format:
 
     ```sh
     CLOUD_DB_URL=<your-cloud-database-url>
+    JWT_SECRET=<your-jwt-secret>
+    JWT_REFRESH_SECRET=<your-jwt-secret>
+    GCS_BUCKET_NAME=<your_bucket_name>
     ```
 
-3. Save the file.
+4. Save the file.
 
 ## 3. Start the Mogilev33 API Server
 

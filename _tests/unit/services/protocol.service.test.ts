@@ -1,9 +1,13 @@
 import { protocolService } from "../../../src/services/protocolService.js";
+import { gcsService } from "../../../src/services/gcsService.js";
 
 import { Protocol } from "../../../src/models/Protocol.js";
 
 import { ProtocolResponseType } from "../../../src/types/ProtocolTypes.js";
-import { CreateProtocolDataType } from "../../../src/validators/protocol.schema.js";
+import {
+    CreateProtocolDataType,
+    CreateProtocolWithUploadDataType,
+} from "../../../src/validators/protocol.schema.js";
 
 import { CustomError } from "../../../src/utils/errorUtils/customError.js";
 
@@ -14,7 +18,6 @@ interface MockProtocolInterface {
     fileUrl: string;
     createdAt: Date;
 }
-
 type ProtocolModelType = typeof Protocol;
 const mockedProtocol = Protocol as jest.Mocked<ProtocolModelType>;
 
@@ -27,6 +30,22 @@ jest.mock("../../../src/models/Protocol.js", () => ({
         findById: jest.fn(),
     },
 }));
+jest.mock("../../../src/services/gcsService.js", () => ({
+    gcsService: {
+        uploadFile: jest.fn(),
+        deleteFile: jest.fn(),
+    },
+}));
+const mockGcsService = gcsService as jest.Mocked<typeof gcsService>;
+
+const mockFile = {
+    originalname: "test.pdf",
+    mimetype: "application/pdf",
+    buffer: Buffer.from("test"),
+    size: 1234,
+} as Express.Multer.File;
+
+const bucket = process.env.GCS_BUCKET_NAME || "test-bucket";
 
 describe("protocolService/getAll()", () => {
     beforeEach(() => {
@@ -76,6 +95,7 @@ describe("protocolService/getAll()", () => {
         ];
 
         expect(result).toEqual(expected);
+        expect(mockedProtocol.find).toHaveBeenCalled();
         expect(mockedProtocol.find).toHaveBeenCalledTimes(1);
         expect(selectMock).toHaveBeenCalledWith("-__v");
         expect(leanMock).toHaveBeenCalledTimes(1);
@@ -116,6 +136,51 @@ describe("protocolService/create", () => {
 
         expect(result).toEqual(expected);
         expect(mockedProtocol.create).toHaveBeenCalledWith(createData);
+    });
+});
+
+describe("protocolService/createWithFile", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("should create and return new protocol", async () => {
+        const createData: CreateProtocolWithUploadDataType = {
+            title: "Test title",
+            date: "2024/12/31",
+            file: mockFile,
+        };
+        const mockProtocol: Partial<MockProtocolInterface> = {
+            _id: "id1",
+            title: "Test title",
+            date: "2024/12/31",
+            fileUrl: "https://storage.fake/test.pdf",
+            createdAt: new Date("2024-01-01"),
+        };
+        mockGcsService.uploadFile.mockResolvedValue(
+            "https://storage.fake/test.pdf"
+        );
+        (mockedProtocol.create as jest.Mock).mockResolvedValue(mockProtocol);
+
+        const result = await protocolService.createWithFile(
+            createData,
+            mockFile
+        );
+
+        const expected: ProtocolResponseType = {
+            _id: "id1",
+            title: "Test title",
+            date: "2024/12/31",
+            fileUrl: "https://storage.fake/test.pdf",
+            createdAt: new Date("2024-01-01"),
+        };
+
+        expect(result).toEqual(expected);
+        expect(mockedProtocol.create).toHaveBeenCalledWith({
+            ...createData,
+            fileUrl: "https://storage.fake/test.pdf",
+        });
+        expect(mockGcsService.uploadFile).toHaveBeenCalledWith(mockFile);
     });
 });
 
@@ -167,6 +232,94 @@ describe("protocolService/edit", () => {
     });
 });
 
+describe("protocolService/editWithFile", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        process.env.GCS_BUCKET_NAME = "test-bucket";
+    });
+
+    it("should update and return the updated protocol", async () => {
+        const protocolId = "id1";
+        const updateData: CreateProtocolWithUploadDataType = {
+            title: "Updated title",
+            date: "2025/12/31",
+            file: mockFile,
+        };
+
+        const oldProtocol = {
+            _id: protocolId,
+            title: "Old title",
+            date: "2024/01/01",
+            fileUrl: `https://storage.googleapis.com/${bucket}/old.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+        (mockedProtocol.findById as jest.Mock).mockResolvedValue(oldProtocol);
+        const mockUpdate: Partial<MockProtocolInterface> = {
+            _id: protocolId,
+            title: "Updated title",
+            date: "2025/12/31",
+            fileUrl: `https://storage.googleapis.com/${bucket}/test.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+        (mockedProtocol.findByIdAndUpdate as jest.Mock).mockResolvedValue(
+            mockUpdate
+        );
+        mockGcsService.deleteFile.mockResolvedValue();
+        mockGcsService.uploadFile.mockResolvedValue(
+            `https://storage.googleapis.com/${bucket}/test.pdf`
+        );
+
+        const result = await protocolService.editWithFile(
+            protocolId,
+            updateData,
+            mockFile
+        );
+
+        const expected: ProtocolResponseType = {
+            _id: protocolId,
+            title: "Updated title",
+            date: "2025/12/31",
+            fileUrl: `https://storage.googleapis.com/${bucket}/test.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+
+        expect(Protocol.findById).toHaveBeenCalledWith(protocolId);
+        expect(result).toEqual(expected);
+        expect(result._id).toBe(protocolId);
+        expect(mockedProtocol.findByIdAndUpdate).toHaveBeenCalledWith(
+            protocolId,
+            {
+                ...updateData,
+                fileUrl: `https://storage.googleapis.com/${bucket}/test.pdf`,
+            },
+            {
+                runValidators: true,
+                new: true,
+            }
+        );
+        expect(mockGcsService.deleteFile).toHaveBeenCalledWith("old.pdf");
+        expect(mockGcsService.uploadFile).toHaveBeenCalledWith(mockFile);
+    });
+
+    it("should throw CustomError if no protocol is found to update", async () => {
+        mockedProtocol.findById.mockResolvedValue(null);
+
+        await expect(
+            protocolService.editWithFile(
+                "id1",
+                {
+                    title: "x",
+                    date: "y",
+                    file: mockFile,
+                },
+                mockFile
+            )
+        ).rejects.toThrow(CustomError);
+        expect(gcsService.deleteFile).not.toHaveBeenCalled();
+        expect(gcsService.uploadFile).not.toHaveBeenCalled();
+    });
+});
+
 describe("protocolService/remove", () => {
     afterEach(() => {
         jest.clearAllMocks();
@@ -195,6 +348,42 @@ describe("protocolService/remove", () => {
         await expect(protocolService.remove("id1")).rejects.toThrow(
             CustomError
         );
+    });
+});
+
+describe("protocolService/removeAndRemoveFromGCS", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        process.env.GCS_BUCKET_NAME = "test-bucket";
+    });
+
+    it("should delete a protocol", async () => {
+        const mockDelete: Partial<MockProtocolInterface> = {
+            _id: "id1",
+            title: "to delete",
+            date: "2024/10/10",
+            fileUrl: `https://storage.googleapis.com/${bucket}/delete.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+        (mockedProtocol.findById as jest.Mock).mockResolvedValue(mockDelete);
+        mockGcsService.deleteFile.mockResolvedValue();
+        mockedProtocol.findByIdAndDelete.mockResolvedValue(
+            mockDelete as MockProtocolInterface
+        );
+
+        await protocolService.removeAndRemoveFromGCS("id1");
+
+        expect(mockedProtocol.findByIdAndDelete).toHaveBeenCalledWith("id1");
+        expect(mockGcsService.deleteFile).toHaveBeenCalledWith("delete.pdf");
+    });
+
+    it("should throw CustomError when protocol not found!", async () => {
+        mockedProtocol.findById.mockResolvedValue(null);
+
+        await expect(
+            protocolService.removeAndRemoveFromGCS("id1")
+        ).rejects.toThrow(CustomError);
+        expect(gcsService.deleteFile).not.toHaveBeenCalled();
     });
 });
 

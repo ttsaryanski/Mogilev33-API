@@ -8,7 +8,10 @@ import errorHandler from "../../../src/middlewares/errorHandler.js";
 
 import { InviteServicesTypes } from "../../../src/types/ServicesTypes.js";
 import { InviteResponseType } from "../../../src/types/InviteTypes.js";
-import { CreateInviteDataType } from "../../../src/validators/invite.schema.js";
+import {
+    CreateInviteDataType,
+    CreateInviteWithUploadDataType,
+} from "../../../src/validators/invite.schema.js";
 
 const validId = new mongoose.Types.ObjectId().toString();
 jest.mock("../../../src/middlewares/authMiddleware.js", () => ({
@@ -37,6 +40,27 @@ const mockInvitesService: jest.Mocked<InviteServicesTypes> = {
     removeAndRemoveFromGCS: jest.fn(),
     getById: jest.fn(),
 };
+
+const mockFile = {
+    originalname: "test.pdf",
+    mimetype: "application/pdf",
+    buffer: Buffer.from("test"),
+    size: 1234,
+} as Express.Multer.File;
+
+const mockBigFile = {
+    originalname: "test.pdf",
+    mimetype: "application/pdf",
+    buffer: Buffer.alloc(6 * 1024 * 1024),
+    size: 6 * 1024 * 1024,
+} as Express.Multer.File;
+
+const mockWrongFile = {
+    originalname: "test.png",
+    mimetype: "image/png",
+    buffer: Buffer.from("test"),
+    size: 1234,
+} as Express.Multer.File;
 
 const app = express();
 app.use(express.json());
@@ -85,7 +109,7 @@ describe("Invites Controller", () => {
 
     test("POST /invitations - should create a invite", async () => {
         const newInvite: CreateInviteDataType = {
-            title: "New note",
+            title: "New invite",
             date: "2023/12/31",
             fileUrl: "http://example.com/invite.pdf",
         };
@@ -109,7 +133,7 @@ describe("Invites Controller", () => {
 
     test("POST /invitations - should return 400 for invalid data - title", async () => {
         const invalidData = {
-            title: "T",
+            title: "V",
             date: "2023/12/31",
             fileUrl: "http://example.com/invite.pdf",
         };
@@ -178,7 +202,7 @@ describe("Invites Controller", () => {
 
     test("PUT /invitations/:inviteId - should return 400 for invalid update data - title", async () => {
         const invalidData: CreateInviteDataType = {
-            title: "T",
+            title: "V",
             date: "2024/01/15",
             fileUrl: "http://example.com/edited-invite.pdf",
         };
@@ -243,7 +267,7 @@ describe("Invites Controller", () => {
     });
 
     test("DELETE /invitations/:inviteId - should delete note", async () => {
-        mockInvitesService.remove.mockResolvedValue();
+        mockInvitesService.removeAndRemoveFromGCS.mockResolvedValue();
 
         const res = await request(app).delete(`/invitations/${validId}`);
         const resBody = res.body as InviteResponseType;
@@ -266,7 +290,7 @@ describe("Invites Controller", () => {
 
     test("GET /invitations/:inviteId - should return invite by ID", async () => {
         const mockData = {
-            title: "New invite",
+            title: "Invite title",
             date: "2023/12/31",
             fileUrl: "http://example.com/invite.pdf",
             _id: validId,
@@ -299,6 +323,256 @@ describe("Invites Controller", () => {
         );
 
         const res = await request(app).get(`/invitations/${validId}`);
+
+        expect(res.status).toBe(500);
+        expect(res.body.message).toMatch("Service failure!");
+    });
+
+    test("POST /invitations/upload - should create a invite with file upload", async () => {
+        const newInvite: CreateInviteWithUploadDataType = {
+            title: "New invite",
+            date: "2023/12/31",
+            file: mockFile,
+        };
+        const createdInvite: InviteResponseType = {
+            _id: validId,
+            title: newInvite.title,
+            date: newInvite.date,
+            fileUrl: "http://example.com/uploaded-invite.pdf",
+            createdAt: new Date(),
+        };
+        mockInvitesService.createWithFile.mockResolvedValue(createdInvite);
+
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "New invite")
+            .field("date", "2023/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        const resBody = res.body as InviteResponseType;
+
+        expect(res.status).toBe(201);
+        expect({
+            ...resBody,
+            createdAt: new Date(resBody.createdAt),
+        }).toEqual(createdInvite);
+        expect(mockInvitesService.createWithFile).toHaveBeenCalledWith(
+            {
+                title: "New invite",
+                date: "2023/12/31",
+                file: expect.objectContaining({
+                    originalname: "test.pdf",
+                    mimetype: "application/pdf",
+                    buffer: expect.any(Buffer),
+                }),
+            },
+            expect.objectContaining({
+                originalname: "test.pdf",
+                mimetype: "application/pdf",
+            })
+        );
+    });
+
+    test("POST /invitations/upload - should return 400 for invalid data - title", async () => {
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "V")
+            .field("date", "2023/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Invite title should be at least 3 characters long!"
+        );
+    });
+
+    test("POST /invitations/upload - should return 400 for invalid data - date", async () => {
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "Valid title")
+            .field("date", "31-12-2023")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+        );
+    });
+
+    test("POST /invitations/upload - should return 400 for invalid data - missing file", async () => {
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "Valid title")
+            .field("date", "2023/12/31");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("File is required for upload!");
+    });
+
+    test("POST /invitations/upload - should return 413 for invalid data - big file", async () => {
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "Valid title")
+            .field("date", "2023/12/31")
+            .attach("file", mockBigFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(413);
+        expect(res.body.message).toBe("File size should not exceed 5MB!");
+    });
+
+    test("POST /invitations/upload - should return 400 for invalid data - wrong file type", async () => {
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "Valid title")
+            .field("date", "2023/12/31")
+            .attach("file", mockWrongFile.buffer, "test.png");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("Only PDF files are allowed!");
+    });
+
+    test("POST /invitations/upload - should return 500 on service error", async () => {
+        mockInvitesService.createWithFile.mockRejectedValue(
+            new Error("Service failure!")
+        );
+
+        const res = await request(app)
+            .post("/invitations/upload")
+            .field("title", "New invite")
+            .field("date", "2023/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(500);
+        expect(res.body.message).toMatch("Service failure!");
+    });
+
+    test("PUT /invitations/upload/inviteId - should edit invite with file upload", async () => {
+        const editData: CreateInviteWithUploadDataType = {
+            title: "Edited invite title",
+            date: "2024/12/31",
+            file: mockFile,
+        };
+        const updatedInvite: InviteResponseType = {
+            _id: validId,
+            title: editData.title,
+            date: editData.date,
+            fileUrl: "http://example.com/uploaded-invite.pdf",
+            createdAt: new Date(),
+        };
+        mockInvitesService.editWithFile.mockResolvedValue(updatedInvite);
+
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "Edited invite title")
+            .field("date", "2024/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        const resBody = res.body as InviteResponseType;
+
+        expect(res.status).toBe(200);
+        expect({
+            ...resBody,
+            createdAt: new Date(resBody.createdAt),
+        }).toEqual(updatedInvite);
+        expect(mockInvitesService.editWithFile).toHaveBeenCalledWith(
+            validId,
+            {
+                title: "Edited invite title",
+                date: "2024/12/31",
+                file: expect.objectContaining({
+                    originalname: "test.pdf",
+                    mimetype: "application/pdf",
+                    buffer: expect.any(Buffer),
+                }),
+            },
+            expect.objectContaining({
+                originalname: "test.pdf",
+                mimetype: "application/pdf",
+            })
+        );
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 400 for invalid data - title", async () => {
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "V")
+            .field("date", "2023/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Invite title should be at least 3 characters long!"
+        );
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 400 for invalid data - date", async () => {
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "Valid title")
+            .field("date", "31-12-2023")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+        );
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 400 for invalid data - missing file", async () => {
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "Valid title")
+            .field("date", "2023/12/31");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("File is required for upload!");
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 413 for invalid data - big file", async () => {
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "Valid title")
+            .field("date", "2023/12/31")
+            .attach("file", mockBigFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(413);
+        expect(res.body.message).toBe("File size should not exceed 5MB!");
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 400 for invalid data - wrong file type", async () => {
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "Valid title")
+            .field("date", "2023/12/31")
+            .attach("file", mockWrongFile.buffer, "test.png");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("Only PDF files are allowed!");
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 400 for invalid invite ID", async () => {
+        const res = await request(app)
+            .put("/invitations/upload/invalidId")
+            .field("title", "Edited invite title")
+            .field("date", "2024/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Id must be a valid MongooseDB ObjectId!"
+        );
+    });
+
+    test("PUT /invitations/upload/inviteId - should return 500 on service error", async () => {
+        mockInvitesService.editWithFile.mockRejectedValue(
+            new Error("Service failure!")
+        );
+
+        const res = await request(app)
+            .put(`/invitations/upload/${validId}`)
+            .field("title", "Edited invite title")
+            .field("date", "2024/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
 
         expect(res.status).toBe(500);
         expect(res.body.message).toMatch("Service failure!");

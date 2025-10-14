@@ -1,9 +1,13 @@
 import { offerService } from "../../../src/services/offerService.js";
+import { gcsService } from "../../../src/services/gcsService.js";
 
 import { Offer } from "../../../src/models/Offer.js";
 
 import { OfferResponseType } from "../../../src/types/OfferTypes.js";
-import { CreateOfferDataType } from "../../../src/validators/offer.schema.js";
+import {
+    CreateOfferDataType,
+    CreateOfferWithUploadDataType,
+} from "../../../src/validators/offer.schema.js";
 
 import { CustomError } from "../../../src/utils/errorUtils/customError.js";
 
@@ -15,7 +19,6 @@ interface MockOfferInterface {
     fileUrl: string;
     createdAt: Date;
 }
-
 type OfferModelType = typeof Offer;
 const mockedOffer = Offer as jest.Mocked<OfferModelType>;
 
@@ -28,6 +31,22 @@ jest.mock("../../../src/models/Offer.js", () => ({
         findById: jest.fn(),
     },
 }));
+jest.mock("../../../src/services/gcsService.js", () => ({
+    gcsService: {
+        uploadFile: jest.fn(),
+        deleteFile: jest.fn(),
+    },
+}));
+const mockGcsService = gcsService as jest.Mocked<typeof gcsService>;
+
+const mockFile = {
+    originalname: "test.pdf",
+    mimetype: "application/pdf",
+    buffer: Buffer.from("test"),
+    size: 1234,
+} as Express.Multer.File;
+
+const bucket = process.env.GCS_BUCKET_NAME || "test-bucket";
 
 describe("offerService/getAll()", () => {
     beforeEach(() => {
@@ -81,6 +100,7 @@ describe("offerService/getAll()", () => {
         ];
 
         expect(result).toEqual(expected);
+        expect(mockedOffer.find).toHaveBeenCalled();
         expect(mockedOffer.find).toHaveBeenCalledTimes(1);
         expect(selectMock).toHaveBeenCalledWith("-__v");
         expect(leanMock).toHaveBeenCalledTimes(1);
@@ -123,6 +143,51 @@ describe("offerService/create", () => {
 
         expect(result).toEqual(expected);
         expect(mockedOffer.create).toHaveBeenCalledWith(createData);
+    });
+});
+
+describe("offerService/createWithFile", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("should create and return new offer", async () => {
+        const createData: CreateOfferWithUploadDataType = {
+            title: "Test title",
+            company: "Test company",
+            price: 150,
+            file: mockFile,
+        };
+        const mockOffer: Partial<MockOfferInterface> = {
+            _id: "id1",
+            title: "Test title",
+            company: "Test company",
+            price: 150,
+            fileUrl: "https://storage.fake/test.pdf",
+            createdAt: new Date("2024-01-01"),
+        };
+        mockGcsService.uploadFile.mockResolvedValue(
+            "https://storage.fake/test.pdf"
+        );
+        (mockedOffer.create as jest.Mock).mockResolvedValue(mockOffer);
+
+        const result = await offerService.createWithFile(createData, mockFile);
+
+        const expected: OfferResponseType = {
+            _id: "id1",
+            title: "Test title",
+            company: "Test company",
+            price: 150,
+            fileUrl: "https://storage.fake/test.pdf",
+            createdAt: new Date("2024-01-01"),
+        };
+
+        expect(result).toEqual(expected);
+        expect(mockedOffer.create).toHaveBeenCalledWith({
+            ...createData,
+            fileUrl: "https://storage.fake/test.pdf",
+        });
+        expect(mockGcsService.uploadFile).toHaveBeenCalledWith(mockFile);
     });
 });
 
@@ -181,6 +246,99 @@ describe("offerService/edit", () => {
     });
 });
 
+describe("offerService/editWithFile", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        process.env.GCS_BUCKET_NAME = "test-bucket";
+    });
+
+    it("should update and return the updated offer", async () => {
+        const offerId = "id1";
+        const updateData: CreateOfferWithUploadDataType = {
+            title: "Updated title",
+            company: "Updated company",
+            price: 250,
+            file: mockFile,
+        };
+
+        const oldOffer = {
+            _id: offerId,
+            title: "Old title",
+            company: "Old company",
+            price: 150,
+            fileUrl: `https://storage.googleapis.com/${bucket}/old.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+        (mockedOffer.findById as jest.Mock).mockResolvedValue(oldOffer);
+        const mockUpdate: Partial<MockOfferInterface> = {
+            _id: offerId,
+            title: "Updated title",
+            company: "Updated company",
+            price: 250,
+            fileUrl: `https://storage.googleapis.com/${bucket}/test.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+        (mockedOffer.findByIdAndUpdate as jest.Mock).mockResolvedValue(
+            mockUpdate
+        );
+        mockGcsService.deleteFile.mockResolvedValue();
+        mockGcsService.uploadFile.mockResolvedValue(
+            `https://storage.googleapis.com/${bucket}/test.pdf`
+        );
+
+        const result = await offerService.editWithFile(
+            offerId,
+            updateData,
+            mockFile
+        );
+
+        const expected: OfferResponseType = {
+            _id: offerId,
+            title: "Updated title",
+            company: "Updated company",
+            price: 250,
+            fileUrl: `https://storage.googleapis.com/${bucket}/test.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+
+        expect(Offer.findById).toHaveBeenCalledWith(offerId);
+        expect(result).toEqual(expected);
+        expect(result._id).toBe(offerId);
+        expect(mockedOffer.findByIdAndUpdate).toHaveBeenCalledWith(
+            offerId,
+            {
+                ...updateData,
+                fileUrl: `https://storage.googleapis.com/${bucket}/test.pdf`,
+            },
+            {
+                runValidators: true,
+                new: true,
+            }
+        );
+        expect(mockGcsService.deleteFile).toHaveBeenCalledWith("old.pdf");
+        expect(mockGcsService.uploadFile).toHaveBeenCalledWith(mockFile);
+    });
+
+    it("should throw CustomError if no offer is found to update", async () => {
+        mockedOffer.findById.mockResolvedValue(null);
+
+        await expect(
+            offerService.editWithFile(
+                "id1",
+                {
+                    title: "x",
+                    company: "y",
+                    price: 50,
+                    file: mockFile,
+                },
+                mockFile
+            )
+        ).rejects.toThrow(CustomError);
+        expect(gcsService.deleteFile).not.toHaveBeenCalled();
+        expect(gcsService.uploadFile).not.toHaveBeenCalled();
+    });
+});
+
 describe("offerService/remove", () => {
     afterEach(() => {
         jest.clearAllMocks();
@@ -208,6 +366,43 @@ describe("offerService/remove", () => {
         mockedOffer.findByIdAndDelete.mockResolvedValue(null);
 
         await expect(offerService.remove("id1")).rejects.toThrow(CustomError);
+    });
+});
+
+describe("offerService/removeAndRemoveFromGCS", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        process.env.GCS_BUCKET_NAME = "test-bucket";
+    });
+
+    it("should delete a offer", async () => {
+        const mockDelete: Partial<MockOfferInterface> = {
+            _id: "id1",
+            title: "to delete",
+            company: "to delete company",
+            price: 100,
+            fileUrl: `https://storage.googleapis.com/${bucket}/delete.pdf`,
+            createdAt: new Date("2024-01-01"),
+        };
+        (mockedOffer.findById as jest.Mock).mockResolvedValue(mockDelete);
+        mockGcsService.deleteFile.mockResolvedValue();
+        mockedOffer.findByIdAndDelete.mockResolvedValue(
+            mockDelete as MockOfferInterface
+        );
+
+        await offerService.removeAndRemoveFromGCS("id1");
+
+        expect(mockedOffer.findByIdAndDelete).toHaveBeenCalledWith("id1");
+        expect(mockGcsService.deleteFile).toHaveBeenCalledWith("delete.pdf");
+    });
+
+    it("should throw CustomError when offer not found!", async () => {
+        mockedOffer.findById.mockResolvedValue(null);
+
+        await expect(
+            offerService.removeAndRemoveFromGCS("id1")
+        ).rejects.toThrow(CustomError);
+        expect(gcsService.deleteFile).not.toHaveBeenCalled();
     });
 });
 

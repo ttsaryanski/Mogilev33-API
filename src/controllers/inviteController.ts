@@ -103,7 +103,7 @@ export function inviteController(inviteService: InviteServicesTypes) {
         asyncErrorHandler(async (req, res) => {
             const file = req.file;
             if (!file) {
-                throw new CustomError("File is required for upload", 400);
+                throw new CustomError("File is required for upload!", 400);
             }
             const data = {
                 ...req.body,
@@ -128,7 +128,7 @@ export function inviteController(inviteService: InviteServicesTypes) {
         asyncErrorHandler(async (req, res) => {
             const file = req.file;
             if (!file) {
-                throw new CustomError("File is required for upload", 400);
+                throw new CustomError("File is required for upload!", 400);
             }
             const data = {
                 ...req.body,

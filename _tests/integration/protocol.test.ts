@@ -1,8 +1,16 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import request from "supertest";
 import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
 
 const mockUserId = new mongoose.Types.ObjectId().toString();
+const bucketName = process.env.GCS_BUCKET_NAME || "my-bucket";
+const regex = new RegExp(
+    `^https://storage\\.googleapis\\.com/${bucketName}/.*\\.pdf$`
+);
+
 jest.mock("../../src/middlewares/authMiddleware.js", () => ({
     authMiddleware: (req: Request, res: Response, next: NextFunction) => {
         req.user = {
@@ -21,8 +29,28 @@ jest.mock("../../src/middlewares/isAdminMiddleware.js", () => ({
 
 import app from "../../src/app";
 import { Protocol, IProtocol } from "../../src/models/Protocol.js";
-
 import { CreateProtocolDataType } from "../../src/validators/protocol.schema";
+
+const mockFile = {
+    originalname: "test.pdf",
+    mimetype: "application/pdf",
+    buffer: Buffer.from("test"),
+    size: 1234,
+} as Express.Multer.File;
+
+const mockBigFile = {
+    originalname: "test.pdf",
+    mimetype: "application/pdf",
+    buffer: Buffer.alloc(6 * 1024 * 1024),
+    size: 6 * 1024 * 1024,
+} as Express.Multer.File;
+
+const mockWrongFile = {
+    originalname: "test.png",
+    mimetype: "image/png",
+    buffer: Buffer.from("test"),
+    size: 1234,
+} as Express.Multer.File;
 
 describe("GET /protocols", () => {
     it("should return empty array", async () => {
@@ -297,5 +325,228 @@ describe("GET /protocols/:protocolId", () => {
 
         expect(res.status).toBe(404);
         expect(res.body.message).toBe("Protocol not found!");
+    });
+});
+
+describe("POST /protocols/upload", () => {
+    beforeEach(async () => {
+        await Protocol.deleteMany();
+    });
+
+    it("should upload file, create new protocol and return 201", async () => {
+        const res = await request(app)
+            .post("/api/protocols/upload")
+            .field("title", "Test title")
+            .field("date", "2025/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(201);
+        expect(res.body.title).toBe("Test title");
+        expect(res.body.date).toBe("2025/12/31");
+        expect(res.body.fileUrl).toMatch(regex);
+
+        const dbEntry = await Protocol.findOne({ title: "Test title" });
+        expect(dbEntry).not.toBeNull();
+    });
+
+    it("should return 400 if data is incorrect - title", async () => {
+        const res = await request(app)
+            .post("/api/protocols/upload")
+            .field("title", "V")
+            .field("date", "2025/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Protocol title should be at least 3 characters long!"
+        );
+
+        const dbEntry = await Protocol.findOne({ title: "V" });
+        expect(dbEntry).toBeNull();
+    });
+
+    it("should return 400 if data is incorrect - date", async () => {
+        const res = await request(app)
+            .post("/api/protocols/upload")
+            .field("title", "Valid title")
+            .field("date", "2025-12-31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+        );
+
+        const dbEntry = await Protocol.findOne({ title: "Valid title" });
+        expect(dbEntry).toBeNull();
+    });
+
+    it("should return 400 if data is incorrect - missing file", async () => {
+        const res = await request(app)
+            .post("/api/protocols/upload")
+            .field("title", "Valid title")
+            .field("date", "2025/12/31");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("File is required for upload!");
+
+        const dbEntry = await Protocol.findOne({ title: "Valid title" });
+        expect(dbEntry).toBeNull();
+    });
+
+    it("should return 413 if data is incorrect -  file is too large", async () => {
+        const res = await request(app)
+            .post("/api/protocols/upload")
+            .field("title", "Valid title")
+            .field("date", "2025/12/31")
+            .attach("file", mockBigFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(413);
+        expect(res.body.message).toBe("File size should not exceed 5MB!");
+
+        const dbEntry = await Protocol.findOne({ title: "Valid title" });
+        expect(dbEntry).toBeNull();
+    });
+
+    it("should return 400 if data is incorrect - file type is incorrect", async () => {
+        const res = await request(app)
+            .post("/api/protocols/upload")
+            .field("title", "Valid title")
+            .field("date", "2025/12/31")
+            .attach("file", mockWrongFile.buffer, "test.png");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("Only PDF files are allowed!");
+
+        const dbEntry = await Protocol.findOne({ title: "Valid title" });
+        expect(dbEntry).toBeNull();
+    });
+});
+
+describe("PUT /protocols/upload/:protocolId", () => {
+    let existingProtocol: IProtocol;
+
+    beforeEach(async () => {
+        await Protocol.deleteMany();
+
+        existingProtocol = await Protocol.create({
+            title: "Original Title",
+            date: "2025/11/30",
+            fileUrl: "https://example.com/original.pdf",
+        });
+    });
+
+    it("should upload new file and update protocol and return 200", async () => {
+        const res = await request(app)
+            .put(`/api/protocols/upload/${existingProtocol._id}`)
+            .field("title", "Updated Title")
+            .field("date", "2025/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(200);
+        expect(res.body.title).toBe("Updated Title");
+        expect(res.body.date).toBe("2025/12/31");
+        expect(res.body.fileUrl).toMatch(regex);
+
+        const dbEntry = await Protocol.findById(existingProtocol._id);
+        expect(dbEntry?.title).toBe("Updated Title");
+    });
+
+    it("should return 400 if protocolId is invalid", async () => {
+        const res = await request(app)
+            .put("/api/protocols/upload/invalid-id")
+            .field("title", "Updated Title")
+            .field("date", "2025/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Id must be a valid MongooseDB ObjectId!"
+        );
+    });
+
+    it("should return 404 if protocol does not exist", async () => {
+        const nonExistingId = new mongoose.Types.ObjectId().toString();
+        const res = await request(app)
+            .put(`/api/protocols/upload/${nonExistingId}`)
+            .field("title", "Updated Title")
+            .field("date", "2025/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(404);
+        expect(res.body.message).toBe("Protocol not found!");
+    });
+
+    it("should return 400 if data is incorrect - title", async () => {
+        const res = await request(app)
+            .put(`/api/protocols/upload/${existingProtocol._id}`)
+            .field("title", "V")
+            .field("date", "2025/12/31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Protocol title should be at least 3 characters long!"
+        );
+
+        const dbEntry = await Protocol.findById(existingProtocol._id);
+        expect(dbEntry?.title).toBe("Original Title");
+    });
+
+    it("should return 400 if data is incorrect - date", async () => {
+        const res = await request(app)
+            .put(`/api/protocols/upload/${existingProtocol._id}`)
+            .field("title", "Valid title")
+            .field("date", "2025-12-31")
+            .attach("file", mockFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe(
+            "Invalid date format. Expected YYYY/MM/DD (e.g. 2025/03/28)!"
+        );
+
+        const dbEntry = await Protocol.findById(existingProtocol._id);
+        expect(dbEntry?.title).toBe("Original Title");
+    });
+
+    it("should return 400 if data is incorrect - missing file", async () => {
+        const res = await request(app)
+            .put(`/api/protocols/upload/${existingProtocol._id}`)
+            .field("title", "Valid title")
+            .field("date", "2025/12/31");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("File is required for upload!");
+
+        const dbEntry = await Protocol.findById(existingProtocol._id);
+        expect(dbEntry?.title).toBe("Original Title");
+    });
+
+    it("should return 413 if data is incorrect -  file is too large", async () => {
+        const res = await request(app)
+            .put(`/api/protocols/upload/${existingProtocol._id}`)
+            .field("title", "Valid title")
+            .field("date", "2025/12/31")
+            .attach("file", mockBigFile.buffer, "test.pdf");
+
+        expect(res.status).toBe(413);
+        expect(res.body.message).toBe("File size should not exceed 5MB!");
+
+        const dbEntry = await Protocol.findById(existingProtocol._id);
+        expect(dbEntry?.title).toBe("Original Title");
+    });
+
+    it("should return 400 if data is incorrect - file type is incorrect", async () => {
+        const res = await request(app)
+            .put(`/api/protocols/upload/${existingProtocol._id}`)
+            .field("title", "Valid title")
+            .field("date", "2025/12/31")
+            .attach("file", mockWrongFile.buffer, "test.png");
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe("Only PDF files are allowed!");
+
+        const dbEntry = await Protocol.findById(existingProtocol._id);
+        expect(dbEntry?.title).toBe("Original Title");
     });
 });
