@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { offerService } from "../../../src/services/offerService.js";
 import { gcsService } from "../../../src/services/gcsService.js";
 
@@ -249,7 +252,6 @@ describe("offerService/edit", () => {
 describe("offerService/editWithFile", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        process.env.GCS_BUCKET_NAME = "test-bucket";
     });
 
     it("should update and return the updated offer", async () => {
@@ -372,7 +374,6 @@ describe("offerService/remove", () => {
 describe("offerService/removeAndRemoveFromGCS", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        process.env.GCS_BUCKET_NAME = "test-bucket";
     });
 
     it("should delete a offer", async () => {

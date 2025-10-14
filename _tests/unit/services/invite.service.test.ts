@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { inviteService } from "../../../src/services/inviteService.js";
 import { gcsService } from "../../../src/services/gcsService.js";
 
@@ -237,7 +240,6 @@ describe("inviteService/edit", () => {
 describe("inviteService/editWithFile", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        process.env.GCS_BUCKET_NAME = "test-bucket";
     });
 
     it("should update and return the updated invite", async () => {
@@ -354,7 +356,6 @@ describe("inviteService/remove", () => {
 describe("inviteService/removeAndRemoveFromGCS", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        process.env.GCS_BUCKET_NAME = "test-bucket";
     });
 
     it("should delete a invite", async () => {

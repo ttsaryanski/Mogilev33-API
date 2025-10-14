@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { protocolService } from "../../../src/services/protocolService.js";
 import { gcsService } from "../../../src/services/gcsService.js";
 
@@ -235,7 +238,6 @@ describe("protocolService/edit", () => {
 describe("protocolService/editWithFile", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        process.env.GCS_BUCKET_NAME = "test-bucket";
     });
 
     it("should update and return the updated protocol", async () => {
@@ -354,7 +356,6 @@ describe("protocolService/remove", () => {
 describe("protocolService/removeAndRemoveFromGCS", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        process.env.GCS_BUCKET_NAME = "test-bucket";
     });
 
     it("should delete a protocol", async () => {
